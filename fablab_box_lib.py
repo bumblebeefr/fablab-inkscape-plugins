@@ -106,8 +106,15 @@ def toPathString(arr):
 
 
 def getPath(path, path_id, _x, _y, bg, fg):
+    style = ''
+    if(bg):
+        style += "fill:%s;" % bg
+    else:
+        style += "fill:none;" 
+    if(fg):
+        style += "stroke:%s;" % fg
     return {
-        'style': "fill:%s;stroke:%s" % (bg, fg),
+        'style': style,
         'id': path_id,
         'transform': "translate(%s,%s)" % (_x,_y),
         'd': path
