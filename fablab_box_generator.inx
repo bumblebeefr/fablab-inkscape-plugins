@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<inkscape-extension>
+  <_name>Box generator</_name>
+  <id>cc.bumblebee.fablab.boxgenerator</id>
+  <dependency type="executable" location="extensions">fablab_box_generator.py</dependency>
+  <dependency type="executable" location="extensions">inkex.py</dependency>
+  
+  <param name="path_id" type="string" _gui-text="ID svg de la boite (prefixe))">box</param>
+
+  <param name="width" type="float" precision="2" min="0" max="9999999"  _gui-text="Largeur">200.00</param>
+  <param name="depth" type="float" precision="2" min="0" max="9999999"  _gui-text="Profondeur">100.00</param>
+  <param name="height" type="float" precision="2" min="0" max="9999999"  _gui-text="Hauteur">50.00</param>
+  <param name="thickness" type="float" precision="2" min="0" max="9999999"  _gui-text="Epaisseur du matériau">3.00</param>
+  <param name="tab_size" type="float" precision="2" min="0" max="9999999"  _gui-text="Largeur des encoches">10.00</param>
+  <param name="backlash" type="float" precision="2" min="0" max="9999999"  _gui-text="Jeu à compenser">0.1</param>
+  
+  <param name="closed" type="boolean" _gui-text="Boite fermée">true</param>
+  
+  <param name="fg" type="boolean" _gui-text="Contours">true</param>
+  <param name="fgcolor" type="color" _gui-text="Couleur du contours">#FF0000FF</param>
+  
+  <param name="bg" type="boolean" _gui-text="Fond">false</param>
+  <param name="bgcolor" type="color" _gui-text="Couleur de fond">#FFFFFFFF</param>
+  
+  
+  <effect>
+    <object-type>all</object-type>
+    <effects-menu>
+       <submenu _name="Fablab"/>
+    </effects-menu>
+  </effect>
+  <script>
+    <command reldir="extensions" interpreter="python">fablab_box_generator.py</command>
+  </script>
+</inkscape-extension>
