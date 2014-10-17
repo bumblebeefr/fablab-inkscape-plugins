@@ -101,8 +101,8 @@ def mm2px(arr):
         return arr * 90 / 25.4
 
 
-def toPathString(arr):
-    return "m %s z" % ' '.join([','.join([str(c) for c in pt]) for pt in arr])
+def toPathString(arr,end=" z"):
+    return "m %s%s" % (' '.join([','.join([str(c) for c in pt]) for pt in arr]),end)
 
 
 def getPath(path, path_id, _x, _y, bg, fg):
