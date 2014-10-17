@@ -112,8 +112,8 @@ class BoxGeneratorEffect(inkex.Effect):
             bgcolor = None
 
 
-        if(self.options.closed == 'true"'):
-            for shape in box.box_with_top(self.options.path_id,centre[0],centre[1], fbgcolor,fgcolor,self.options.width,self.options.depth,self.options.height,self.options.tab_size,self.options.thickness,self.options.backlash):
+        if(self.options.closed == 'true'):
+            for shape in box.box_with_top(self.options.path_id,centre[0],centre[1], bgcolor,fgcolor,self.options.width,self.options.depth,self.options.height,self.options.tab_size,self.options.thickness,self.options.backlash):
                 inkex.etree.SubElement(parent, inkex.addNS('path','svg'), shape )
         else:
             for shape in box.box_without_top(self.options.path_id,centre[0],centre[1], bgcolor,fgcolor,self.options.width,self.options.depth,self.options.height,self.options.tab_size,self.options.thickness,self.options.backlash):
