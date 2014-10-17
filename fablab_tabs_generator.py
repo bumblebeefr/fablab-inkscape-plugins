@@ -86,6 +86,7 @@ class BoxGeneratorEffect(inkex.Effect):
         inkex.etree.SubElement(parent, inkex.addNS('path', 'svg'), shape)
 
 
-# Create effect instance and apply it.
-effect = BoxGeneratorEffect()
-effect.affect()
+
+if __name__ == '__main__':
+    effect = BoxGeneratorEffect()
+    effect.affect()
