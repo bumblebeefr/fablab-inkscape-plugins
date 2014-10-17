@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<inkscape-extension xmlns="http://www.inkscape.org/namespace/inkscape/extension">
+  <_name>Eps with Roland CutContour Color Output</_name>
+  <id>cc.bumblebee.fablab.eps.cutcontour</id>
+  <dependency type="extension">org.inkscape.print.eps.cairo</dependency>
+  <dependency type="executable" location="extensions">fablab_roland_eps.py</dependency>
+  <dependency type="executable" location="extensions">inkex.py</dependency>
+  <param name="tab" type="notebook">
+    <page name="help" _gui-text="Help">
+      <_param name="ext_help" type="description" xml:space="preserve">Enregistrement du document au Format EPS en intégrant la couleur 'CutContour' de découpe utilisée par les imprimantes/découpeuses Vinyle Roland type BN-20.
+    
+Les traits de découpe doivent exclusivement être fait en lignes vectorielles de couleur rouge (RGB : #FF0000 ) sans transparence. 
+C'est une bonne idée de ne pas utiliser cette couleur pour autre chose (modifier la légèrement si vous voulez du rouge, par exemple #FE0000, cela sera invisible à l'œil).</_param>
+    </page>
+  </param>
+
+  <output>
+    <extension>.eps</extension>
+    <mimetype>application/postscript</mimetype>
+    <_filetypename>Eps avec Couleur Roland CutContour (*.eps)</_filetypename>
+    <_filetypetooltip>Enregistre le document au Format EPS avec gestion de la couleur Roland 'CutContour'</_filetypetooltip>
+    <dataloss>true</dataloss>
+  </output>
+  <script>
+    <command reldir="extensions" interpreter="python">fablab_roland_eps.py</command>
+    <helper_extension>org.inkscape.print.eps.cairo</helper_extension>
+  </script>
+</inkscape-extension>
