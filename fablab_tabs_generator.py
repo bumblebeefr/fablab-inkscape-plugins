@@ -80,13 +80,13 @@ class BoxGeneratorEffect(inkex.Effect):
         centre = self.view_center
 
         tabs = box.tabs(self.options.width, self.options.tab_size, self.options.thickness, backlash = self.options.backlash*-1, lastUp=True)
-        shape = box.getPath(box.toPathString(box.mm2px(tabs), end=''), '%s_bottom' % self.options.path_id, centre[0], centre[1], None, '#FF0000')
+        shape = box.getPath(box.toPathString(box.mm2px(tabs)), '%s_bottom' % self.options.path_id, centre[0], centre[1], None, '#FF0000')
         inkex.etree.SubElement(parent, inkex.addNS('path', 'svg'), shape)
 
 
         tabs = [[0,0]]
         tabs.extend(box.tabs(self.options.width, self.options.tab_size, self.options.thickness, backlash = self.options.backlash))
-        shape = box.getPath(box.toPathString(box.mm2px(tabs), end=''), '%s_bottom' % self.options.path_id, centre[0], centre[1]+2*box.mm2px(self.options.thickness), None, '#00FF00')
+        shape = box.getPath(box.toPathString(box.mm2px(tabs)), '%s_bottom' % self.options.path_id, centre[0], centre[1]+2*box.mm2px(self.options.thickness), None, '#00FF00')
         inkex.etree.SubElement(parent, inkex.addNS('path', 'svg'), shape)
 
 
