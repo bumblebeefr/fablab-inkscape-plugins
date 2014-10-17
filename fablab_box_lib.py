@@ -52,7 +52,7 @@ def _generate_tabs_path(tab_width, nb_tabs, thickness, cutOff=False, inverted=Fa
                     points.append([0, thickness])
 
                 if(i == 1 or i == nb_tabs):
-                    points.append([tab_width - [thickness,0][cutOff] - (0.5 * backlash), 0])
+                    points.append([tab_width - [0,thickness][cutOff] - (0.5 * backlash), 0])
                 else:
                     points.append([tab_width - backlash, 0])
 
@@ -68,7 +68,7 @@ def _generate_tabs_path(tab_width, nb_tabs, thickness, cutOff=False, inverted=Fa
                     points.append([0, -thickness])
 
                 if(i == 1 or i == nb_tabs):
-                    points.append([tab_width - [thickness,0][cutOff] + (0.5 * backlash), 0])
+                    points.append([tab_width - [0,thickness][cutOff] + (0.5 * backlash), 0])
                 else:
                     points.append([tab_width + backlash, 0])
 
