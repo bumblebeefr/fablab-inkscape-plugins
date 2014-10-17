@@ -11,10 +11,9 @@ Disponible dans `Extension > Fablab > Générer une boite à encoches`, ce gener
 ### Générateur ligne d'encoche
 Disponible dans `Extension > Fablab > Générer une ligne dencoches`, c'est en fait un extrait du gnérateur de boite qui ne vous genere qu'une seule ligne d'encoches, ce qui peut être utile lors de la construction manuelle de structure plus complexes que de simple "boites". Deux ligne sont en fait générées qui correcposndent au deux arete s'emboitent l'une dans l'autre.
 
-
-## Utiles pour les imprimante/decoupeuse vinyle Roland type BN20
-### Plugin d'enregistrement au format EPS, incluant la gestion de la couleur CutContour utilisé pour decouper le vinyle.
-Disponible dans `Enregistrer sous` et en selectionnant le type `Eps avec Couleur Roland CutContour (*.eps)`. La couleur utilisée 
+## Imprimante/découpeuse vinyle Roland type BN20
+Plugin d'enregistrement au format EPS, incluant la gestion de la couleur "CutContour" utilisée pour decouper le vinyle.
+Disponible dans `Enregistrer sous` et en selectionnant le type `Eps avec Couleur Roland CutContour (*.eps)`. 
 
 Les traits de découpe doivent exclusivement être fait en lignes vectorielles de couleur rouge (RGB : #FF0000 ) sans transparence. 
 C'est une bonne idée de ne pas utiliser cette couleur pour autre chose (modifier la légèrement si vous voulez du rouge, par exemple #FE0000, cela sera invisible à l'œil).</_param>
