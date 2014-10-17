@@ -17,12 +17,6 @@
   
   <param name="closed" type="boolean" _gui-text="Boite fermée">true</param>
   
-  <param name="fg" type="boolean" _gui-text="Contours">true</param>
-  <param name="fgcolor" type="color" _gui-text="Couleur du contours">#FF0000FF</param>
-  
-  <param name="bg" type="boolean" _gui-text="Fond">false</param>
-  <param name="bgcolor" type="color" _gui-text="Couleur de fond">#FFFFFFFF</param>
-  
   
   <effect>
     <object-type>all</object-type>
