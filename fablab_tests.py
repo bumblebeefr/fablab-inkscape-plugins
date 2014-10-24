@@ -11,9 +11,9 @@ import inkex, simplepath, simpletransform, simplestyle
 
 
 def print_(*arg):
-    f = open("fablab_debug.log","a")
+    f = open("fablab_debug.log", "a")
     for s in arg :
-        s = str(unicode(s).encode('unicode_escape'))+" "
+        s = str(unicode(s).encode('unicode_escape')) + " "
         f.write( s )
     f.write("\n")
     f.close()
@@ -56,6 +56,64 @@ TROTEC_COLORS = [
 def roundValues(arr):
     #return [round(val * 100) / 100 for val in arr]
     return arr
+
+
+class Polyline:
+
+    def __init__(self, initial_segment):
+        self.segments = [initial_segment]
+
+    def start_point(self):
+        return self.segments[0].start
+
+    def end_point(self):
+        return self.segments[-1].end
+
+    def append(self, segment):
+        if(segment.start == self.end_point()):
+            self.segments.append(segment)
+        else:
+            raise AssertionError("can't add segment that does not start with end_point of the current Polyline")
+
+    def length(self):
+        return len(self.segments)
+
+    def to_simplepath(self):
+        path = []
+        if self.length() > 0:
+            path.append(self.segments[0].simplePathStart())
+            path.extend((p.simplePathEnd() for p in self.segments))
+        return path
+
+    def format(self):
+        return simplepath.formatPath(self.to_simplepath())
+
+    def reverse(self):
+        self.segments.reverse()
+        for segment in self.segments:
+            segment.reverse()
+
+    def _contruct_from_segment_array(self, arr):
+        while True:
+            next_segment = Segment.find_and_flag_next_segment(self.end_point(), arr)
+            if(next_segment is not None):
+                self.append(next_segment)
+            else:
+                break
+
+    @classmethod
+    def generate_from_segment_array(cls, arr):
+        ''' Generate (yield) polylines(array of consecutive segments) from the specified segment array.
+            Before running, segments in the array must not be flaged 'used'.
+        '''
+        for segment in arr:
+            if(not segment.used):
+                segment.used = True
+                polyline = Polyline(segment)
+                polyline._contruct_from_segment_array(arr)
+                polyline.reverse()
+                polyline._contruct_from_segment_array(arr)
+                yield polyline
 
 
 class Segment:
@@ -107,8 +165,6 @@ class Segment:
         if self.command == 'L':
             self.end, self.start = self.start, self.end
         elif self.command == 'C':
-            #outch that's buggy
-            inkex.errormsg("Hum on dirait que l'invertion d'une courbe de bezier ne soit pas bonne :(")
             self.end, self.start = self.start, self.end
             self.extra_parameters[:2], self.extra_parameters[2:4] = self.extra_parameters[2:4], self.extra_parameters[:2]
         else:
@@ -143,18 +199,6 @@ class Segment:
                 inkex.errormsg("Path Command %s not managed Yet" % cmd)
 
     @classmethod
-    def polyline_to_simplepath(cls, poly):
-        path = []
-        if len(poly) > 0:
-            path.append(poly[0].simplePathStart())
-            path.extend((p.simplePathEnd() for p in poly))
-        return path
-
-    @classmethod
-    def format_polyline(cls, poly):
-        return simplepath.formatPath(Segment.polyline_to_simplepath(poly))
-
-    @classmethod
     def find_and_flag_next_segment(cls, end, arr):
         '''
             Find a segment that can be placed after the 'end' point in the polyline. Can reverse a segment if needed.
@@ -177,32 +221,6 @@ class Segment:
         print_("Not found :( \n")
         return None
 
-    @classmethod
-    def _contruct_polyline(cls, polyline, arr):
-        while True:
-            next_segment = Segment.find_and_flag_next_segment(polyline[-1].end, arr)
-            if(next_segment is not None):
-                polyline.append(next_segment)
-            else:
-                break
-
-
-    @classmethod
-    def polylines_iter(cls, arr):
-        ''' Generate (yield) polylines(array of consecutive segments) from the specified segment array.
-            Before running, segments in the array must not be flaged 'used'.
-        '''
-        for segment in arr:
-            if(not segment.used):
-                segment.used = True
-                polyline = [segment]
-                Segment._contruct_polyline(polyline, arr)
-                if(len(polyline) == 1):
-                    #single line ? maybe we start by the wrong side, reversing and retry
-                    segment.reverse()
-                    Segment._contruct_polyline(polyline, arr)
-                yield polyline
-
 
 # Pour le moment :
 #  - ne prend en entrée que des path (voir a gerer les rectangles au moins)
@@ -224,9 +242,7 @@ class MyEffect(inkex.Effect):
         self.start_stop = {}
 
     def effect(self):
-         
-        
-        
+
         #print_(self.options)
         parent = self.current_layer
 
@@ -234,7 +250,7 @@ class MyEffect(inkex.Effect):
         #x1, y1, x2, y2 = simpletransform.computeBBox(self.selected.values())
         grp = inkex.etree.SubElement(parent, inkex.addNS('g', 'svg'), {'transform': "translate(%s,%s)" % (200, 200)})#, {'transform': "translate(%s,%s)" % (x2,0)})
 
-        segments_by_color = {} 
+        segments_by_color = {}
 
         for path in self.selected:
             # work on copy to be shure not breaking anything
@@ -255,13 +271,11 @@ class MyEffect(inkex.Effect):
                 inkex.errormsg("color %s is not a valid TROTEC color, not managed by this plugin Yet" % color)
 
         for color in TROTEC_COLORS:
-            for poly in Segment.polylines_iter(segments_by_color.get(color, [])):
-                line_attribs = {'style': "fill:none;stroke:%s;stroke-width:2;" % color, 'd': Segment.format_polyline(poly)}
+            for poly in Polyline.generate_from_segment_array(segments_by_color.get(color, [])):
+                line_attribs = {'style': "fill:none;stroke:%s;stroke-width:2;" % color, 'd': poly.format()}
                 inkex.etree.SubElement(grp, inkex.addNS('path', 'svg'), line_attribs)
 
-            #for d in [s.formatPath() for s in segments_by_color.get(color, [])]:
-            #    line_attribs = {'style': "fill:none;stroke:%s;stroke-width:2;" % color, 'd': d}
-            #    inkex.etree.SubElement(grp, inkex.addNS('path', 'svg'), line_attribs)
+
 
 
 
