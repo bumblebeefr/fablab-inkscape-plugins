@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<inkscape-extension xmlns="http://www.inkscape.org/namespace/inkscape/extension">
+  <_name>Trotec Spool File (TSF) for laser cutter</_name>
+  <id>cc.bumblebee.fablab.tsf</id>
+  <dependency type="extension">org.inkscape.output.svg.inkscape</dependency>
+  <dependency type="executable" location="extensions">fablab_tsf.py</dependency>
+  <dependency type="executable" location="extensions">inkex.py</dependency>
+  <param name="tab" type="notebook">
+    <page name="help" _gui-text="Help">
+      <_param name="ext_help" type="description" xml:space="preserve">Enregistrement du document au Format TSF (Trotec Spool File) pour decoupeuses laser.
+      
+      /!\ Pas du tout fonctionel, en cours de dev /!\</_param></page>
+  </param>
+
+  <output>
+    <extension>.tsf</extension>
+    <mimetype>application/tsf</mimetype>
+    <_filetypename>Trotec Spool File (*.tsf)</_filetypename>
+    <_filetypetooltip>Enregistre le document au Format TSF pour decoupeuses laser Trotec</_filetypetooltip>
+    <dataloss>true</dataloss>
+  </output>
+  <script>
+    <command reldir="extensions" interpreter="python">fablab_tsf.py</command>
+    <helper_extension>org.inkscape.output.svg.inkscape</helper_extension>
+  </script>
+</inkscape-extension>
