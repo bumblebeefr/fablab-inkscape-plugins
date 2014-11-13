@@ -9,7 +9,7 @@
     <page name="help" _gui-text="Help">
       <_param name="ext_help" type="description" xml:space="preserve">Enregistrement du document au Format TSF (Trotec Spool File) pour decoupeuses laser.
       
-      ⚠ Version Alpha, manque certaines fonctinalité et contient de bugs⚠
+      ⚠ Version Alpha, manque certaines fonctinalités et contient de bugs
       
       ♨ Soyez patient la génération du fichier tsf peut prendre quelques secondes !
       </_param></page>
