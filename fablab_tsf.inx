@@ -5,21 +5,50 @@
   <dependency type="extension">org.inkscape.output.svg.inkscape</dependency>
   <dependency type="executable" location="extensions">fablab_tsf.py</dependency>
   <dependency type="executable" location="extensions">inkex.py</dependency>
-  <param name="tab" type="notebook">
-    <page name="help" _gui-text="Help">
-      <_param name="ext_help" type="description" xml:space="preserve">Enregistrement du document au Format TSF (Trotec Spool File) pour decoupeuses laser.
-      
-      ⚠ Version Alpha, manque certaines fonctinalités et contient de bugs
-      
-      ♨ Soyez patient la génération du fichier tsf peut prendre quelques secondes !
-      </_param></page>
+  <_param name="ext_help" type="description" xml:space="preserve">
+Enregistrement du document au Format TSF (Trotec Spool File) pour decoupeuses laser.
+
+⚠ Version Alpha, manque certaines fonctionalités et contient surement des bugs
+  </_param>
+  <param name="jobname" type="string" _gui-text="Nom du Job : ">Job</param>
+  <param name="jobnumber" type="int" _gui-text="Position du Job : ">1</param>
+  <param name="resolution" type="optiongroup" appearance="minimal" _gui-text="Résolution : ">
+    <_option value="125">125dpi</_option>
+    <_option value="250">250dpi</_option>
+    <_option value="333">333dpi</_option>
+    <_option value="500">500dpi</_option>
+    <_option value="600">600dpi</_option>
+    <_option value="1000">1000dpi</_option>
   </param>
+  <param name="cutline" type="optiongroup" appearance="minimal" _gui-text="Contour de decoupe additionel : ">
+  	<_option value="none">Aucun</_option>
+  	<_option value="circular">Circulaire</_option>
+  	<_option value="rectangular">Rectangulaire</_option>
+  	<_option value="optimized">Automatique</_option>
+  </param>
+  <param name="processmode" type="optiongroup" appearance="minimal" _gui-text="Type de gravure : ">
+  	<_option value="None">Aucune</_option>
+  	<_option value="Standard">Gravure standard</_option>
+  	<_option value="Relief">Gravure en relief</_option>
+  	<_option value="Layer">Gravure multicouches</_option>
+  	<_option value="Stamp">Gravure de tampon</_option>
+  </param>
+  <param name="layernumber" type="int" _gui-text="Gravure multicouches - Nombre de couches : " min="1">1</param>
+  <param name="layeradjustement" type="float" _gui-text="Gravure multicouches - Ajustement des couches : " min="0">0.0</param>
+  <param name="stampshoulder" type="optiongroup" appearance="minimal" _gui-text="Gravure de tampon - Talus : ">
+  	<_option value="flat">plat</_option>
+  	<_option value="medium">moyen</_option>
+  	<_option value="steep">raide</_option>
+  </param>
+  <_param name="ext_help2" type="description" xml:space="preserve">
+  &#9203; Soyez patient la génération du fichier tsf peut prendre quelques secondes !
+  </_param>
 
   <output>
     <extension>.tsf</extension>
     <mimetype>application/tsf</mimetype>
     <_filetypename>Trotec Spool File (*.tsf)</_filetypename>
-    <_filetypetooltip>Enregistre le document au Format TSF pour decoupeuses laser Trotec</_filetypetooltip>
+    <_filetypetooltip>Enregistre le document au Format TSF pour découpeuses laser Trotec</_filetypetooltip>
     <dataloss>true</dataloss>
   </output>
   <script>

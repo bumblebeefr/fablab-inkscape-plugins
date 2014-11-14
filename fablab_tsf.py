@@ -43,7 +43,6 @@ def print_(*arg):
     f.close()
 
 
-
 def path_to_segments(node):
     mat = simpletransform.composeParents(node, [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
     d = node.get('d')
@@ -63,7 +62,6 @@ def path_to_segments(node):
         for csp in sp:
             path.append([csp[1][0], csp[1][1]])
         yield path
-
 
 
 def subdivideCubicPath(sp, flat, i=1):
@@ -110,28 +108,29 @@ class DrawPolygon:
         o.extend(self.colors)
         for pt in self.points:
             o.extend(pt)
-        print('<DrawPolygon: %s>' % ";".join((str(i) for i in o)))
+        return '<DrawPolygon: %s>\n' % ";".join((str(i) for i in o))
 
     def add_point(self, x, y):
         self.points.append([x, y])
 
 
 class TsfFile:
-    def __init__(self, resolution=500):
+    def __init__(self, options, output=sys.stdout):
         self.header = {
-            'ProcessMode': 'Standard',
+            'ProcessMode': options.processmode,
             'Size': (10.0, 10.0),
             'MaterialGroup': 'Standard',
             'MaterialName': 'Standard',
-            'JobName': 'job',
-            'JobNumber': 1,
-            'Resolution': resolution,
-            'Cutline': 'none',
-            'LayerParameters': (2, 0.0),
-            'StampShoulder': 'flat'
+            'JobName': options.jobname,
+            'JobNumber': options.jobnumber,
+            'Resolution': options.resolution,
+            'Cutline': options.cutline,
+            'LayerParameters': (options.layernumber, options.layeradjustement),
+            'StampShoulder': options.stampshoulder
         }
         self.image = None
         self.draw_commands = []
+        self.out = output
 
     def setSize(self, w, h):
         self.header['Size'] = (self.toMm(w), self.toMm(h))
@@ -146,21 +145,25 @@ class TsfFile:
         return inkex.uutounit(inkex.unittouu(str(val)), 'mm')
 
     def simple_header_out(self, name, default):
-        print('<%s: %s>' % (name, self.header.get(name, default)))
+        self.out.write('<%s: %s>/n' % (name, self.header.get(name, default)))
 
     def output(self):
-        print('<!-- Version: 9.4.2.1034>')
-        print('<!-- PrintingApplication: inkscape.exe>')
+        self.out.write('<!-- Version: 9.4.2.1034>\n')
+        self.out.write('<!-- PrintingApplication: inkscape.exe>\n')
 
-        print('<BegGroup: Header>')
-        self.simple_header_out('ProcessMode', 'Standard')
-        print('<Size: %s;%s>' % self.header.get('Size', (0.0, 0.0)))
+        self.out.write('<BegGroup: Header>\n')
+        if self.header.get('ProcessMode', "default") == 'None':
+            self.out.write('<ProcessMode: Standard>\n')
+        else:
+            self.simple_header_out('ProcessMode', 'Standard')
 
-        if self.header.get('ProcessMode', 'Standard') == 'Layer':
-            print("<LayerParameter: %s;%s>" % self.get('LayerParameters', (2, 0.0)))
+        self.out.write('<Size: %s;%s>\n' % self.header.get('Size', (0.0, 0.0)))
 
-        if self.header.get('ProcessMode', 'Standard') == 'Stamp':
-            print("<StampShoulder: %s>" % self.get('StampShoulder', 'flat'))
+        if self.header.get('ProcessMode') == 'Layer':
+            self.out.write("<LayerParameter: %s;%s>\n" % self.header.get('LayerParameters', (2, 0.0)))
+
+        if self.header.get('ProcessMode') == 'Stamp':
+            self.out.write("<StampShoulder: %s>\n" % self.header.get('StampShoulder', 'flat'))
 
         self.simple_header_out('MaterialGroup', 'Standard')
         self.simple_header_out('MaterialName', 'Standard')
@@ -168,21 +171,21 @@ class TsfFile:
         self.simple_header_out('JobNumber', '2')
         self.simple_header_out('Resolution', '500')
         self.simple_header_out('Cutline', 'none')
-        print('<EndGroup: Header>')
+        self.out.write('<EndGroup: Header>\n')
 
-        if self.image is not None and os.path.isfile(self.image):
-            print('<BegGroup: Bitmap>')
-            sys.stdout.write('<STBmp: 0;0>')
+        if self.header.get('ProcessMode') != 'None' and self.image is not None and os.path.isfile(self.image):
+            self.out.write('<BegGroup: Bitmap>\n')
+            self.out.write('<STBmp: 0;0>')
             with open(self.image, 'rb') as image:
-                sys.stdout.write(image.read())
-            sys.stdout.write('<EOBmp>')
-            print('<EndGroup: Bitmap>')
+                self.out.write(image.read())
+            self.out.write('<EOBmp>/n')
+            self.out.write('<EndGroup: Bitmap>n/')
 
         if self.draw_commands:
-            print('<BegGroup: DrawCommands>')
+            self.out.write('<BegGroup: DrawCommands>/n')
             for draw_command in self.draw_commands:
-                draw_command.output()
-            print('<EndGroup: DrawCommands>')
+                self.out.write(draw_command.output())
+            self.out.write('<EndGroup: DrawCommands>/n')
 
     def add_polygon(self, r, g, b, points):
         polygon = DrawPolygon(r, g, b, [[self.toDots(x), self.toDots(y)] for x, y in points])
@@ -211,7 +214,14 @@ class FlattenEffect(BaseEffect):
 
     def __init__(self):
         BaseEffect.__init__(self)
-        self.OptionParser.add_option('--tab', action='store', type='string', default='')
+        self.OptionParser.add_option('--processmode', action='store', type='choice', choices=[ 'None', 'Standard', 'Layer', 'Stamp', 'Relief'], default='None')
+        self.OptionParser.add_option('--jobname', action='store', type='string', default='Job')
+        self.OptionParser.add_option('--jobnumber', action='store', type='int', default=1)
+        self.OptionParser.add_option('--resolution', action='store', type='int', default=500)
+        self.OptionParser.add_option('--layernumber', action='store', type='int', default=1)
+        self.OptionParser.add_option('--layeradjustement', action='store', type='float', default=0)
+        self.OptionParser.add_option('--stampshoulder', action='store', type='choice', choices=['flat', 'medium', 'steep'], default='flat')
+        self.OptionParser.add_option('--cutline', action='store', type='choice', choices=['none', 'circular', 'rectangular', 'optimized'], default='none')
 
     def effect(self):
         u"""Converts all texts to paths."""
@@ -253,7 +263,7 @@ class FlattenEffect(BaseEffect):
             doc_height = inkex.unittouu(self.document.getroot().get('height'))
 
             # start generating tsf 
-            tsf = TsfFile()
+            tsf = TsfFile(self.options)
             tsf.setSize(doc_width, doc_height)
 
             #adding polygones
@@ -273,22 +283,27 @@ class FlattenEffect(BaseEffect):
                     path.set('style', simplestyle.formatStyle(path_style))
 
             # generate png then bmp for engraving
-            fd, tmp_png = tempfile.mkstemp(".png", text=False)
-            os.close(fd)
-            fd, tmp_bmp = tempfile.mkstemp(".bmp", text=False)
-            os.close(fd)
-            tmp_svg = self.tmp_file_from_document()
-            try:
-                inkscape(tmp_svg, '-z', '-C', '-b', '#ffffff', '-y', '1', '-d', 500, '-e', tmp_png)
-                # convert(tmp_png, '-flip', '-colorspace', 'Gray', '-ordered-dither', 'h8x8a,256', '-depth', '8', '-alpha', 'off', '-compress', 'NONE', '-colors', '256', 'BMP3:%s' % tmp_bmp)
-                convert(tmp_png, '-flip', '-colorspace', 'Gray', '-ordered-dither', 'h4x4a', '-monochrome', tmp_bmp)
-                tsf.setImage(tmp_bmp)
+            if(self.options.processmode != 'None'):
+                fd, tmp_png = tempfile.mkstemp(".png", text=False)
+                os.close(fd)
+                fd, tmp_bmp = tempfile.mkstemp(".bmp", text=False)
+                os.close(fd)
+                tmp_svg = self.tmp_file_from_document()
+                try:
+                    inkscape(tmp_svg, '-z', '-C', '-b', '#ffffff', '-y', '1', '-d', 500, '-e', tmp_png)
 
-            finally:
+                    if(self.options.processMode in ['Layer', 'Relief']):
+                        convert(tmp_png, '-flip', '-fx', '(r+g+b)/3', '-colorspace', 'Gray', '-ordered-dither', 'h8x8a,256', '-depth', '8', '-alpha', 'off', '-compress', 'NONE', '-colors', '256', 'BMP3:%s' % tmp_bmp)
+                    else:
+                        convert(tmp_png, '-flip', '-fx', '(r+g+b)/3', '-colorspace', 'Gray', '-ordered-dither', 'h4x4', '-monochrome', tmp_bmp)
+                    tsf.setImage(tmp_bmp)
+                finally:
+                    tsf.output()
+                    os.remove(tmp_svg)
+                    os.remove(tmp_png)
+                    os.remove(tmp_bmp)
+            else:
                 tsf.output()
-                os.remove(tmp_svg)
-                os.remove(tmp_png)
-                os.remove(tmp_bmp)
 
         finally:
             pass

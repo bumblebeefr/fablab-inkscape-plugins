@@ -18,10 +18,9 @@ Les découpeuses laser TROTEC utilisent des fichiers tsf pour la découpe/gravur
 ⚠ Ce plugin est pour le moment en version Alpha, pas forcément très stable et probablement encore plein de bugs. Quelques trucs à savoir : 
 * Nécessite d'avoir image magick d'installé
 * Testé sous GNU/Linux (mint,ubuntu,...) mais devrait fonctionner aussi sous windows
-* Pas de configuration pour le moment, mais cela devrait venir rapidement.
 * Il donne acces à l'enregistrement de fichiers au format `.tsf`, mais peut être dans le futur pourra directement exporter dans le repertoire de spool de la machine (en cours sde reflexion).
 * Les notes prises durant l'analyse de la structure des fichiers tsf sont disponible (en français) [ici](http://carrefour-numerique.cite-sciences.fr/fablab/wiki/doku.php?id=machines:decoupe_laser:tsf)
-* Les tache d'impression sont pour le moment nomées `job` en statique, donc elle apparaitrons sous ce nom dans JobControl
+* La generations des images noiréblanc utilisées pour la gravure n'ont pas été paufinées. À venir !
 
 ## Imprimante/découpeuse vinyle Roland type BN20
 Plugin d'enregistrement au format EPS, incluant la gestion de la couleur "CutContour" utilisée pour decouper le vinyle.
