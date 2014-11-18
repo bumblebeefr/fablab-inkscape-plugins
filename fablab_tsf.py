@@ -10,14 +10,6 @@ import simplestyle
 from fablab_lib import *
 from fablab_tsf_lib import TsfFile
 
-if "windows" not in platform.system().lower():
-    from fablab_sh_lib import inkscape
-    from fablab_sh_lib import convert
-else:
-    from fablab_pbs_lib import inkscape
-    from fablab_pbs_lib import convert
-
-
 TROTEC_COLORS = [
     '#ff0000',
     '#0000ff',
@@ -41,6 +33,7 @@ class TsfEffect(BaseEffect):
 
     def __init__(self):
         BaseEffect.__init__(self)
+        self.OptionParser.add_option('--tabs', action='store', type='string', default='Job')
         self.OptionParser.add_option('--processmode', action='store', type='choice', choices=['None', 'Standard', 'Layer', 'Stamp', 'Relief'], default='None')
         self.OptionParser.add_option('--jobname', action='store', type='string', default='Job')
         self.OptionParser.add_option('--jobnumber', action='store', type='int', default=1)
@@ -50,8 +43,34 @@ class TsfEffect(BaseEffect):
         self.OptionParser.add_option('--stampshoulder', action='store', type='choice', choices=['flat', 'medium', 'steep'], default='flat')
         self.OptionParser.add_option('--cutline', action='store', type='choice', choices=['none', 'circular', 'rectangular', 'optimized'], default='none')
 
+    def get_size_and_offset(self, file_path):
+        if(self.selected):
+            return inkscape_command(['-z', '-f', file_path, '-W']), inkscape_command(['-z', '-f', file_path, '-H']), inkscape_command(['-z', '-f', file_path, '-X']), inkscape_command(['-z', '-f', file_path, '-Y'])
+        else:
+            return inkex.unittouu(self.document.getroot().get('width')), inkex.unittouu(self.document.getroot().get('height')), 0, 0
+
+    def generate_bmp(self, tmp_bmp):
+        with tmp_file(".png", text=False) as tmp_png:
+            with self.as_tmp_svg() as tmp_svg:
+                if(self.selected):
+                    inkscape_command(tmp_svg, '-z', '-D', '-b', '#ffffff', '-y', '1', '-d', self.options.resolution, '-e', tmp_png)
+                else:
+                    inkscape_command(tmp_svg, '-z', '-C', '-b', '#ffffff', '-y', '1', '-d', self.options.resolution, '-e', tmp_png)
+
+                if(self.options.processmode in ['Layer', 'Relief']):
+                    convert_command(tmp_png, '-flip', '-fx', '(r+g+b)/3', '-colorspace', 'Gray', '-ordered-dither', 'h8x8a,256', '-depth', '8', '-alpha', 'off', '-compress', 'NONE', '-colors', '256', 'BMP3:%s' % tmp_bmp)
+                else:
+                    convert_command(tmp_png, '-flip', '-fx', '(r+g+b)/3', '-colorspace', 'Gray', '-ordered-dither', 'h4x4a', '-monochrome', tmp_bmp)
+
     def effect(self):
         ink_args = []
+
+        #remove all objects not in selection
+        if(self.selected):
+            for k in self.selected:
+                ink_args.append('--select=%s' % k)
+            ink_args.append("--verb=EditInvert")
+            ink_args.append("--verb=EditDelete")
 
         # unlink clones
         for node in self.document.getroot().iterdescendants("{http://www.w3.org/2000/svg}use"):
@@ -78,25 +97,17 @@ class TsfEffect(BaseEffect):
 
         with self.inkscaped(ink_args) as tmp:
             # get document size to test if path are in visble zone
-            doc_width = inkex.unittouu(self.document.getroot().get('width'))
-            doc_height = inkex.unittouu(self.document.getroot().get('height'))
+            doc_width, doc_height, doc_offset_x, doc_offset_y = self.get_size_and_offset(tmp)
 
             # start generating tsf
-            tsf = TsfFile(self.options, doc_width, doc_height)
+            tsf = TsfFile(self.options, doc_width, doc_height, doc_offset_x, doc_offset_y)
             tsf.write_header()
 
             # generate png then bmp for engraving
             if(self.options.processmode != 'None'):
-                with tmp_file(".png", text=False) as tmp_png:
-                    with tmp_file(".bmp", text=False) as tmp_bmp:
-                        with self.as_tmp_svg() as tmp_svg:
-                            inkscape(tmp_svg, '-z', '-C', '-b', '#ffffff', '-y', '1', '-d', 500, '-e', tmp_png)
-
-                            if(self.options.processmode in ['Layer', 'Relief']):
-                                convert(tmp_png, '-flip', '-fx', '(r+g+b)/3', '-colorspace', 'Gray', '-ordered-dither', 'h8x8a,256', '-depth', '8', '-alpha', 'off', '-compress', 'NONE', '-colors', '256', 'BMP3:%s' % tmp_bmp)
-                            else:
-                                convert(tmp_png, '-flip', '-fx', '(r+g+b)/3', '-colorspace', 'Gray', '-ordered-dither', 'h4x4a', '-monochrome', tmp_bmp)
-                            tsf.write_picture(tmp_bmp)
+                with tmp_file(".bmp", text=False) as tmp_bmp:
+                    self.generate_bmp(tmp_bmp)
+                    tsf.write_picture(tmp_bmp)
 
             # adding polygones
             with tsf.draw_commands() as draw_polygon:

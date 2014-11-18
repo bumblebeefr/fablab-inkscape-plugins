@@ -10,7 +10,17 @@ from fablab_lib import *
 
 
 class TsfFile:
-    def __init__(self, options, w=0, h=0, output=sys.stdout):
+    def __init__(self, options, w=0, h=0, offset_x=0, offset_y=0, output=sys.stdout):
+        """
+            Object to generate a tsf file.
+
+            options : option object used to generate tsf header
+            w : width of the job in pixels (inkscape uunit)
+            h : height of the job in pixels (inkscape uunit)
+            offset_x : offset between the svg x origin and the job origin (useful when we are not extracting the page but only a selection
+            offset_y : offset between the svg y origin and the job origin (useful when we are not extracting the page but only a selection
+            output : output file stream
+        """
         self.header = {
             'ProcessMode': options.processmode,
             'Size': (10.0, 10.0),
@@ -23,6 +33,7 @@ class TsfFile:
             'LayerParameters': (options.layernumber, options.layeradjustement),
             'StampShoulder': options.stampshoulder
         }
+        self.offset_x, self.offset_y = offset_x, offset_y
         self.header['Size'] = (self.toMm(w), self.toMm(h))
         self.out = output
 
@@ -79,6 +90,6 @@ class TsfFile:
 
     def _draw_polygon(self, r, g, b, points):
         o = [len(points), r, g, b]
-        for point in ([self.toDots(x), self.toDots(y)] for x, y in points):
+        for point in ([self.toDots(x - self.offset_x), self.toDots(y - self.offset_x)] for x, y in points):
             o.extend(point)
         self.out.write('<DrawPolygon: %s>\n' % ";".join((str(i) for i in o)))
