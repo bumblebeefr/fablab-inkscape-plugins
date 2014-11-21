@@ -1,3 +1,3 @@
 #!/bin/bash
 git pull
-ln -f -s fablab* ~/.config/inkscape/extensions/
+ln -f -s $(pwd)/fablab* ~/.config/inkscape/extensions/
