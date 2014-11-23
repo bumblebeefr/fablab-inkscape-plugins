@@ -16,8 +16,11 @@ Les découpeuses laser TROTEC utilisent des fichiers tsf pour la découpe/gravur
 
 ⚠ Ce plugin est pour le moment en version Alpha, pas forcément très stable et probablement encore plein de bugs. Quelques trucs à savoir : 
 * Nécessite d'avoir image magick d'installé
-* Testé sous GNU/Linux (mint,ubuntu,...) mais devrait fonctionner aussi sous freebsd, windows et macosx
-* Il donne acces à l'enregistrement de fichiers au format `.tsf`, mais peut être dans le futur pourra directement exporter dans le repertoire de spool de la machine (en cours sde reflexion).
+* Testé sous GNU/Linux (mint,ubuntu,...) et un peu sous windows7 mais devrait fonctionner aussi sous freebsd et macosx
+* Il donne acces à l'enregistrement de fichiers au format `.tsf`
+* Aussi acessible via le menu `Extension > Fablab > Exporter en fichier Trotec Spool File (TSF)`
+  * Il faut, dans ce cas, ne pas oublier de configurer le répertoire de spool (répertoire où seront exportées les fichier tsf)
+  * Il est possible de cette façons d'exporter uniquement la selection en cochant la case appropriée
 * Les notes prises durant l'analyse de la structure des fichiers tsf sont disponible (en français) [ici](http://carrefour-numerique.cite-sciences.fr/fablab/wiki/doku.php?id=machines:decoupe_laser:tsf)
 * La generations des images noiréblanc utilisées pour la gravure n'ont pas été paufinées. À venir !
 
