@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <inkscape-extension xmlns="http://www.inkscape.org/namespace/inkscape/extension">
-	<_name>Trotec Spool File (TSF) for laser cutter</_name>
-	<id>cc.bumblebee.fablab.tsf</id>
+	<_name>Exporter en fichier Trotec Spool File (TSF)</_name>
+	<id>cc.bumblebee.fablab.tsf2</id>
 	<dependency type="extension">org.inkscape.output.svg.inkscape</dependency>
 	<dependency type="executable" location="extensions">fablab_tsf.py</dependency>
 	<dependency type="executable" location="extensions">inkex.py</dependency>
@@ -14,6 +14,7 @@ Enregistrement du document au Format TSF (Trotec Spool File) pour decoupeuses la
 		<page name="job" _gui-text="Job">
 			<param name="jobname" type="string" _gui-text="Nom du Job : ">Job</param>
 			<param name="jobnumber" type="int" _gui-text="Position du Job : ">1</param>
+  			<param name="onlyselection" type="boolean" _gui-text="Exporter uniquement la selection">false</param>
 			<param name="resolution" type="optiongroup" appearance="minimal" _gui-text="Résolution : ">
 				<_option value="125">125dpi</_option>
 				<_option value="250">250dpi</_option>
@@ -45,20 +46,27 @@ Enregistrement du document au Format TSF (Trotec Spool File) pour decoupeuses la
 				<_option value="steep">raide</_option>
 			</param>
 		</page>
+		<page name="options" _gui-text="Spooler">
+			<_param name="ext_help" type="description" xml:space="preserve">Chemin du répertoire où seront sauvegardés les fichiers .tsf.
+			 
+Ce répertoire doit exister. 
+
+Cela peut être le répertoire de spool de votre découpeuse laser, ou bien nimporte quel répertoire de votre ordinateur dans lequel vous souhaitez stocker vos fichiers .tsf.
+  </_param>
+			<param name="spoolpath" type="string" gui-text=" "></param>
+		</page>
 	</param>
 	<_param name="ext_help2" type="description" xml:space="preserve">
   &#9203; Soyez patient la génération du fichier tsf peut prendre quelques secondes !
   </_param>
 
-	<output>
-		<extension>.tsf</extension>
-		<mimetype>application/tsf</mimetype>
-		<_filetypename>Trotec Spool File (*.tsf)</_filetypename>
-		<_filetypetooltip>Enregistre le document au Format TSF pour découpeuses laser Trotec</_filetypetooltip>
-		<dataloss>true</dataloss>
-	</output>
+	<effect  needs-live-preview="false">
+		<object-type>all</object-type>
+		<effects-menu>
+			<submenu _name="Fablab" />
+		</effects-menu>
+	</effect>
 	<script>
 		<command reldir="extensions" interpreter="python">fablab_tsf.py</command>
-		<helper_extension>org.inkscape.output.svg.inkscape</helper_extension>
 	</script>
 </inkscape-extension>

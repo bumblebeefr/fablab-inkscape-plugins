@@ -10,6 +10,7 @@ from fablab_lib import *
 
 
 class TsfFile:
+
     def __init__(self, options, w=0, h=0, offset_x=0, offset_y=0, output=sys.stdout):
         """
             Object to generate a tsf file.
@@ -33,7 +34,7 @@ class TsfFile:
             'LayerParameters': (options.layernumber, options.layeradjustement),
             'StampShoulder': options.stampshoulder
         }
-        self.offset_x, self.offset_y = offset_x, offset_y
+        self.offset_x, self.offset_y = float(offset_x), float(offset_y)
         self.header['Size'] = (self.toMm(w), self.toMm(h))
         self.out = output
 

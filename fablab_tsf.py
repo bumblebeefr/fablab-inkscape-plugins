@@ -42,17 +42,19 @@ class TsfEffect(BaseEffect):
         self.OptionParser.add_option('--layeradjustement', action='store', type='float', default=0)
         self.OptionParser.add_option('--stampshoulder', action='store', type='choice', choices=['flat', 'medium', 'steep'], default='flat')
         self.OptionParser.add_option('--cutline', action='store', type='choice', choices=['none', 'circular', 'rectangular', 'optimized'], default='none')
+        self.OptionParser.add_option('--spoolpath', action='store', type='string', default='')
+        self.OptionParser.add_option('--onlyselection', action="store", type='choice', choices=['true', 'false'], default='false')
 
     def get_size_and_offset(self, file_path):
-        if(self.selected):
-            return inkscape_command(['-z', '-f', file_path, '-W']), inkscape_command(['-z', '-f', file_path, '-H']), inkscape_command(['-z', '-f', file_path, '-X']), inkscape_command(['-z', '-f', file_path, '-Y'])
+        if(self.onlyselected()):
+            return inkscape_command('-z', '-W', file_path), inkscape_command('-z', '-H', file_path), inkscape_command('-z', '-X', file_path), inkscape_command('-z', '-Y', file_path)
         else:
             return inkex.unittouu(self.document.getroot().get('width')), inkex.unittouu(self.document.getroot().get('height')), 0, 0
 
     def generate_bmp(self, tmp_bmp):
         with tmp_file(".png", text=False) as tmp_png:
             with self.as_tmp_svg() as tmp_svg:
-                if(self.selected):
+                if(self.onlyselected()):
                     inkscape_command(tmp_svg, '-z', '-D', '-b', '#ffffff', '-y', '1', '-d', self.options.resolution, '-e', tmp_png)
                 else:
                     inkscape_command(tmp_svg, '-z', '-C', '-b', '#ffffff', '-y', '1', '-d', self.options.resolution, '-e', tmp_png)
@@ -62,11 +64,19 @@ class TsfEffect(BaseEffect):
                 else:
                     convert_command(tmp_png, '-flip', '-fx', '(r+g+b)/3', '-colorspace', 'Gray', '-ordered-dither', 'h4x4a', '-monochrome', tmp_bmp)
 
+    def onlyselected(self):
+        return self.selected and self.options.onlyselection == 'true'
+
     def effect(self):
         ink_args = []
 
-        #remove all objects not in selection
-        if(self.selected):
+        if(self.options.spoolpath):
+            if not os.path.isdir(self.options.spoolpath):
+                inkex.errormsg(u"Le chemin spécifié (%s) pour le répértoire de spool où seront exportés les fichier tsf est incorrect." % self.options.spoolpath)
+                return
+
+        # remove all objects not in selection
+        if(self.onlyselected()):
             for k in self.selected:
                 ink_args.append('--select=%s' % k)
             ink_args.append("--verb=EditInvert")
@@ -98,16 +108,18 @@ class TsfEffect(BaseEffect):
         with self.inkscaped(ink_args) as tmp:
             # get document size to test if path are in visble zone
             doc_width, doc_height, doc_offset_x, doc_offset_y = self.get_size_and_offset(tmp)
+            output_file = None
 
             # start generating tsf
-            tsf = TsfFile(self.options, doc_width, doc_height, doc_offset_x, doc_offset_y)
+            if self.options.spoolpath:
+                filepath = os.path.join(self.options.spoolpath, self.options.jobname + ".tsf")
+                output_file = open(filepath, "w")
+                tsf = TsfFile(self.options, doc_width, doc_height, doc_offset_x, doc_offset_y, output=output_file)
+            else:
+                tsf = TsfFile(self.options, doc_width, doc_height, doc_offset_x, doc_offset_y)
+
             tsf.write_header()
 
-            # generate png then bmp for engraving
-            if(self.options.processmode != 'None'):
-                with tmp_file(".bmp", text=False) as tmp_bmp:
-                    self.generate_bmp(tmp_bmp)
-                    tsf.write_picture(tmp_bmp)
 
             # adding polygones
             with tsf.draw_commands() as draw_polygon:
@@ -123,7 +135,21 @@ class TsfEffect(BaseEffect):
                         path_style['stroke'] = 'none'
                         path.set('style', simplestyle.formatStyle(path_style))
 
-        inkex.errormsg(u" ☯ Génération du fichier TSF effectuée, cliquer sur valider pour terminer l'enregistrement du fichier.")
+            # generate png then bmp for engraving
+            if(self.options.processmode != 'None'):
+                with tmp_file(".bmp", text=False) as tmp_bmp:
+                    self.generate_bmp(tmp_bmp)
+                    tsf.write_picture(tmp_bmp)
+
+            if output_file:
+                try:
+                    output_file.close()
+                except OSError:
+                    pass
+                finally:
+                    inkex.errormsg(u" ☯ Génération du fichier TSF effectuée.")
+            else:
+                inkex.errormsg(u" ☯ Génération du fichier TSF effectuée, cliquer sur valider pour terminer l'enregistrement du fichier.")
 
 if __name__ == '__main__':
     TsfEffect().affect(output=False)

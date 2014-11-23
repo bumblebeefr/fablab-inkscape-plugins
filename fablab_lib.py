@@ -43,11 +43,12 @@ def execute_command(*popenargs, **kwargs):
         cmd = kwargs.get("args")
         if cmd is None:
             cmd = popenargs[0]
-        raise subprocess.CalledProcessError(retcode, cmd, output=output)
+        raise RuntimeError("Exit code %s on execting command %s \n\n %s" % (retcode, cmd, output))
     return output
 
 
 def inkscape_command(*args):
+    print_("Colling inkscape with", args)
     return execute_command(['inkscape'] + [str(arg) for arg in args])
 
 
@@ -148,6 +149,7 @@ def subdivideCubicPath(sp, flat, i=1):
 
 
 class BaseEffect(inkex.Effect):
+
     def __init__(self):
         inkex.Effect.__init__(self)
 
