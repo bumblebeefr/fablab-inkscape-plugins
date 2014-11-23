@@ -14,7 +14,9 @@ Disponible dans `Extension > Fablab > Générer une ligne d'encoches`, c'est en 
 ### Sortie de Fichiers .tsf (Trotec Spool File)
 Les découpeuses laser TROTEC utilisent des fichiers tsf pour la découpe/gravure. La seule possibilité jusqu'ici était d'utiliser le driver d'impression fournis par Trotec (fermé, propriétaitre et compatible uniquement Window) pour générer ces fichiers. Ce plugin essaye de proposer un alternative permettant d'enregistrer votre document au format `.tsf` pour ces decoupeuses laser à partir d'inkscape et donc de n'importe quel OS (il reste obligatoire d'utiliser le Logiciel JobControl sous windows pour piloter la machine).
 
-⚠ Ce plugin est pour le moment en version Alpha, pas forcément très stable et probablement encore plein de bugs. Quelques trucs à savoir : 
+⚠ Ce plugin est pour le moment en version Beta, utilisable probablement non dépourvu de bugs. 
+
+Quelques trucs à savoir : 
 * Nécessite d'avoir image magick d'installé
 * Testé sous GNU/Linux (mint,ubuntu,...) et un peu sous windows7 mais devrait fonctionner aussi sous freebsd et macosx
 * Il donne acces à l'enregistrement de fichiers au format `.tsf`
