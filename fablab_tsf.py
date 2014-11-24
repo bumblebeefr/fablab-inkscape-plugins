@@ -79,8 +79,8 @@ class TsfEffect(BaseEffect):
         return filepath
 
     def paths_to_unit_segments(self, path_nodes):
-        print_("paths_to_unit_segments",path_nodes)
-        if False:
+        print_("paths_to_unit_segments", path_nodes)
+        if self.options.optimize == 'false':
             for path in path_nodes:
                 for points in path_to_segments(path):
                     print_("Mini segments : ", points)
