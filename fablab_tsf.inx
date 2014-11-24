@@ -48,7 +48,7 @@ Enregistrement du document au Format TSF (Trotec Spool File) pour decoupeuses la
 		</page>
 	</param>
 	<_param name="ext_help2" type="description" xml:space="preserve">
-  &#9203; Soyez patient la génération du fichier tsf peut prendre quelques secondes !
+  &#9203; Soyez patient·e·s, la génération du fichier tsf peut prendre quelques secondes !
   </_param>
 
 	<output>
