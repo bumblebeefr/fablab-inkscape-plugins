@@ -1,33 +1,36 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-# These two lines are only needed if you don't put the script directly into
-# the installation directory
-import sys, copy
-import math, operator, itertools
+import sys
+import copy
+import math
+
 sys.path.append('/usr/share/inkscape/extensions')
+import inkex
+import simplepath
+import simpletransform
+import simplestyle
 
-
-import inkex, simplepath, simpletransform, simplestyle
+from pathmodifier import  PathModifier
 
 
 def print_(*arg):
     f = open("fablab_debug.log", "a")
-    for s in arg :
+    for s in arg:
         s = str(unicode(s).encode('unicode_escape')) + " "
-        f.write( s )
+        f.write(s)
     f.write("\n")
     f.close()
 
 
-def unsignedLong( signedLongString):
+def unsignedLong(signedLongString):
     longColor = long(signedLongString)
     if longColor < 0:
         longColor = longColor & 0xFFFFFFFF
     return longColor
 
-def getColorString(longColor):
 
+def getColorString(longColor):
     longColor = unsignedLong(longColor)
     hexColor = hex(longColor)[2:-3]
     hexColor = hexColor.rjust(6, '0')
@@ -62,7 +65,7 @@ def roundValues(arr):
 
 
 def roundValue(val):
-    return round(val * PRECISION) / PRECISION
+    return round(val, PRECISION)
 
 
 def similar(a, b):
@@ -73,24 +76,8 @@ def similar(a, b):
         return abs(roundValue(a) - roundValue(b)) <= 2 / PRECISION
 
 
-def solve_tsp_dynamic(polylines):
-    #calc all lengths
-    all_distances = [[x.distance_to(y) for y in polylines] for x in polylines]
-    print_("polylines : ", polylines)
-    print_("all_distances : ", all_distances)
-    #initial value - just distance from 0 to every other point + keep the track of edges
-    A = {(frozenset([0, idx+1]), idx+1): (dist, [0,idx+1]) for idx,dist in enumerate(all_distances[0][1:])}
-    cnt = len(polylines)
-    for m in range(2, cnt):
-        B = {}
-        for S in [frozenset(C) | {0} for C in itertools.combinations(range(1, cnt), m)]:
-            for j in S - {0}:
-                B[(S, j)] = min( [(A[(S-{j},k)][0] + all_distances[k][j], A[(S-{j},k)][1] + [j]) for k in S if k != 0 and k!=j]) #this will use 0th index of tuple for ordering, the same as if key=itemgetter(0) used
-        A = B
-    res = min([(A[d][0] + all_distances[0][d[1]], A[d][1]) for d in iter(A)])
-    return res[1]
-
-
+def node_color(node):
+    return simplestyle.parseStyle(node.get('style','')).get('stroke', None)
 
 
 class Polyline:
@@ -109,7 +96,6 @@ class Polyline:
             self.segments.append(segment)
         else:
             raise AssertionError("can't add segment that does not start with end_point of the current Polyline")
-
 
     def length(self):
         return len(self.segments)
@@ -147,7 +133,6 @@ class Polyline:
         x2, y2 = polyline.end_point()
         return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
 
-
     @classmethod
     def generate_from_segment_array(cls, arr):
         ''' Generate (yield) polylines(array of consecutive segments) from the specified segment array.
@@ -162,32 +147,25 @@ class Polyline:
                 polyline._contruct_from_segment_array(arr)
                 yield polyline
 
-
     @classmethod
     def optimize_order(cls, arr):
         last_poly = Origin()
         while len(arr) > 0:
-            #print_('*********** Taille du tableau ', len(arr), '***********')
             next_poly = None
             dist = None
-            for i, polyline in enumerate(arr):
-                #print_('*********** elment ', i, '***********')
+            for polyline in arr:
                 if(next_poly is None):
                     next_poly = polyline
                     dist = last_poly.distance_to(polyline)
- 
-                #print_("distance",polyline.distance_to(last_poly)," compare a",dist)
+
                 if(last_poly.distance_to(polyline) < dist):
                     next_poly = polyline
                     dist = last_poly.distance_to(polyline)
-                    #print_("je prend ",i)
- 
-                #print_("distance_inverse",polyline.distance_reversed_to(last_poly)," compare a",dist)
+
                 if(last_poly.distance_to_reversed(polyline) < dist):
                     polyline.reverse()
                     next_poly = polyline
                     dist = last_poly.distance_to(polyline)
-                    #print_("je prend l'inverse de",i)
 
             last_poly = next_poly
             arr.remove(next_poly)
@@ -203,7 +181,7 @@ class Origin(Polyline):
         return [0, 0]
 
     def end_point(self):
-        return [0,0]
+        return [0, 0]
 
     def append(self, segment):
         raise AssertionError("can't add segment to Origin")
@@ -222,7 +200,6 @@ class Origin(Polyline):
 
     def _contruct_from_segment_array(self, arr):
         raise AssertionError("can't add segment to Origin")
-
 
 
 class Segment:
@@ -315,80 +292,21 @@ class Segment:
              - end : last point of the polyline
              - arr : array of segments
         '''
-        #print_("Searchin' next segment starting at %s:" % end)
         for segment in arr:
-            #print_("  - Segment %s -> %s (used:%s)" % (segment.start, segment.end, segment.used))
             if not segment.used:
                 if segment.end == end:
-                    #print_("    reversing..")
                     segment.reverse()
-                    #print_("     %s -> %s" % (segment.start, segment.end))
+
                 if segment.start == end:
-                    #print_("    !!! Got It !!!\n")
                     segment.used = True
                     return segment
-        #print_("Not found :( \n")
+
         return None
 
-
-
-def extract_optimizable_paths_by_color(nodes):
-    '''
-        nodes doit etre un iterateur sur des noeuds (tableau,generateur,noeud type groupe, ...)
-    '''
-    print_(nodes)
-    for node in nodes:
-        
-        # Noeuds de type Chemin
-        if node.tag == "{http://www.w3.org/2000/svg}path":
-             # work on copy to be shure not breaking anything
-            p = copy.deepcopy(node)
-
-            # apply transformation info on path, otherwise dealing with transform would be a mess
-            simpletransform.fuseTransform(p)
-
-            # get style, check color, ...
-            style = simplestyle.parseStyle(p.get('style'))
-            color = style.get('stroke', None)
-
-            if(color in TROTEC_COLORS):
-                yield color, p
-            else:
-                inkex.errormsg("%s n'est pas une couleur TROTEC, supposons que c'est quelquechose a graver" %color)
-                yield 'engrave', p
-
-        elif node.tag == "{http://www.w3.org/2000/svg}use":
-            inkex.errormsg("Les clones ne sont pas geres pour le moment")
-            pass
-        elif node.tag == "{http://www.w3.org/2000/svg}rect":
-            inkex.errormsg("Les rectangles ne sont pas geres pour le moment")
-            pass
-
-        # Noeuds de type groupe
-        elif node.tag == "{http://www.w3.org/2000/svg}g":
-            inkex.errormsg("Les Groupes ne sont pas geres pour le moment")
-#             for path in extract_optimizable_paths_by_color(node):
-#                 path.set('transform', node.get('transform', ''))
-#                 simpletransform.fuseTransform(p)
-#                 yield path
-            pass
-
-        elif node.tag == "{http://www.w3.org/2000/svg}image":
-            inkex.errormsg("Les Images ne sont pas geres pour le moment")
-            pass
-        else:
-            inkex.errormsg("Les noeuds de type %s ne sont pas geres" % node.tag)
-            pass
-
-
-# Pour le moment :
-#  - ne prend en entrée que des path (voir a gerer les rectangles au moins)
-#  - Les objets doivent être degroupés d'abord
-
-
-# TODO : Faire une classe Polyline en plus de la de segment et faire plusieur optmisation 
-#        de suite pour pouvoir joindre des poliligne non fermées dnas la construction 
-#        est partie dans des direction opposées
+# TODO
+# Correct bugs on clone stranslation, in some case resutant transform matrix are wrong
+# Mange all type of path for reversion (Segment)
+# Try to convert to path simple elements such as line, rectangle, ...
 class MyEffect(inkex.Effect):
     def __init__(self):
         """
@@ -400,46 +318,143 @@ class MyEffect(inkex.Effect):
         self.OptionParser.add_option('--tab')
         self.start_stop = {}
 
-    def effect(self):
+    def extract_optimizable_paths_by_color(self, nodes, with_transform_matrix = None):
+        '''
+            nodes must be an iterator on svg node objects (array, generator,group node, ...). 
+            Will generate tuples (color,path) where color is either a valid TROTEC color, 
+            'engrave' for element that are used for engraving or 'unsupported' for element(nodes) that
+            are note supported. Notice that text nodes are supported for engraving but not for cut optimization.
+        '''
+        print_(nodes)
+        for node in nodes:
 
-        #print_(self.options)
+            # merge transformation for this node and all parents
+            print_("clone transform matrix", with_transform_matrix)
+            transform_matrix = simpletransform.composeParents(node, [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
+            print_("matrix before", transform_matrix)
+            if(with_transform_matrix):
+                transform_matrix = simpletransform.composeTransform(with_transform_matrix, transform_matrix)
+            print_("matrix after", transform_matrix)
+
+            # work on copy to be sure not breaking anything
+            node_copy = copy.deepcopy(node)
+            node_copy.set("transform", simpletransform.formatTransform(transform_matrix))
+
+            # Path Nodes
+            if node.tag == "{http://www.w3.org/2000/svg}path":
+                # apply transformation info on path, otherwise dealing with transform would be a mess
+                simpletransform.fuseTransform(node_copy)
+
+                # get style, check color, ...
+                color = node_color(node_copy)
+
+                if(color in TROTEC_COLORS):
+                    yield color, node_copy
+                else:
+                    yield 'engrave', node_copy
+
+            # Clone nodes
+            elif node.tag == "{http://www.w3.org/2000/svg}use":
+                inkex.errormsg(u"Aïe un clone, ca risque de ne pas marcher, ou peut être que si, ou pas.")
+                # yield 'unsupported', 'clone'
+                cloned_id = node.get('{http://www.w3.org/1999/xlink}href', '#')[1:]
+                cloned = self.getElementById(cloned_id)
+
+                if(cloned is None):
+                    raise AssertionError("Element %s not found when resolving clone" % cloned_id)
+                else:
+                    clone_matrix = simpletransform.composeParents(node, [[1.0, 0.0, float(node.get('x', 0.0))], [0.0, 1.0, float(node.get('y', 0.0))]])
+                    if(with_transform_matrix):
+                        clone_matrix = simpletransform.composeTransform(with_transform_matrix, transform_matrix)
+                    for color, path in self.extract_optimizable_paths_by_color([cloned], clone_matrix):
+                        yield color, path
+                pass
+
+            # pour virer les groupes et les clones regarder pathmodifier.py y'a plein de choses interessantes
+
+            # Rectangle nodes
+            elif node.tag == "{http://www.w3.org/2000/svg}rect":
+                yield 'unsupported', 'rectangle'
+                pass
+
+            # Circle nodes
+            elif node.tag == "{http://www.w3.org/2000/svg}circle":
+                yield 'unsupported', 'cercle'
+                pass
+
+            # Ellipse nodes
+            elif node.tag == "{http://www.w3.org/2000/svg}ellispe":
+                yield 'unsupported', 'ellispe'
+                pass
+
+            # Line nodes
+            elif node.tag == "{http://www.w3.org/2000/svg}line":
+                yield 'unsupported', 'ligne'
+                pass
+
+            # Line nodes
+            elif node.tag == "{http://www.w3.org/2000/svg}polyline":
+                yield 'unsupported', 'polyligne'
+                pass
+
+            # Line nodes
+            elif node.tag == "{http://www.w3.org/2000/svg}polygone":
+                yield 'unsupported', 'polygone'
+                pass
+
+            # Text nodes
+            elif node.tag == "{http://www.w3.org/2000/svg}text":
+                if(node_color(node) in TROTEC_COLORS):
+                    yield 'unsupported', 'texte'
+                else:
+                    yield 'engrave', node_copy
+                pass
+
+            # Group nodes
+            elif node.tag == "{http://www.w3.org/2000/svg}g":
+                for color, path in self.extract_optimizable_paths_by_color(node, with_transform_matrix):
+                    yield color, path
+                pass
+
+            # Image nodes
+            elif node.tag == "{http://www.w3.org/2000/svg}image":
+                yield 'engrave', node_copy
+
+            else:
+                yield 'unsupported', node.tag
+                pass
+
+    def effect(self):
+        if len(self.selected) == 0:
+            inkex.errormsg(u"Merci de selectionner les éléments à optimiser pour la découpe laser.")
+            return
+
         parent = self.current_layer
 
-        #create a group where we wil write nodes. Determine BoundingBox to mode the  output near the original selection
-        #x1, y1, x2, y2 = simpletransform.computeBBox(self.selected.values())
-        grp = inkex.etree.SubElement(parent, inkex.addNS('g', 'svg'), {'transform': "translate(%s,%s)" % (200, 200)})#, {'transform': "translate(%s,%s)" % (x2,0)})
+        # Create a group where we wil write nodes. Determine BoundingBox to mode the  output near the original selection
+        # x1, y1, x2, y2 = simpletransform.computeBBox(self.selected.values())
+        grp = inkex.etree.SubElement(parent, inkex.addNS('g', 'svg'), {'transform': "translate(%s,%s)" % (200, 200)})
 
         segments_by_color = {}
-# 
-#         for path in self.selected:
-#             print_(self.selected.get(path).tag)
 
-        print_(self.selected)
-
-        for color, path in extract_optimizable_paths_by_color((self.selected.get(n) for n in self.selected)):
+        for color, path in self.extract_optimizable_paths_by_color((self.selected.get(n) for n in self.selected)):
             if color not in segments_by_color:
                 segments_by_color[color] = set()
-            segments_by_color[color].update(Segment.convertToSegments(path))
 
-#         for path in self.selected:
-# 
-#             # work on copy to be shure not breaking anything
-#             p = copy.deepcopy(self.selected.get(path))
-# 
-#             # apply transformation info on path, otherwise dealing with transform would be a mess
-#             simpletransform.fuseTransform(p)
-# 
-#             # get style, check color, ...
-#             style = simplestyle.parseStyle(p.get('style'))
-#             color = style.get('stroke', None)
-# 
-#             if(color in TROTEC_COLORS):
-#                 if color not in segments_by_color:
-#                     segments_by_color[color] = set()
-#                 segments_by_color[color].update(Segment.convertToSegments(p))
-#             else:
-#                 inkex.errormsg("color %s is not a valid TROTEC color, not managed by this plugin Yet" % color)
+            if color in TROTEC_COLORS:
+                segments_by_color[color].update(Segment.convertToSegments(path))
+            else:
+                segments_by_color[color].add(path)
 
+        # Check for unsupported elments
+        if('unsupported' in segments_by_color):
+            inkex.errormsg(u"Les elements de type %s ne sont pas supportés. Merci de les convertir en Chemin (Chemin>>Objets en chemins) et de de-lier les clones." % ", ".join(segments_by_color.get('unsupported')))
+            return
+
+        # Add a copy of elements for engraving
+        grp.extend(segments_by_color.get('engrave', []))
+
+        # Add optimized path for lasercut
         for color in TROTEC_COLORS:
             for poly in Polyline.optimize_order([p for p in Polyline.generate_from_segment_array(segments_by_color.get(color, []))]):
                 line_attribs = {'style': "fill:none;stroke:%s;stroke-width:2;marker-end:url(#Arrow2Mend)" % color, 'd': poly.format()}

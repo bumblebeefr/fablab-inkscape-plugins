@@ -15,6 +15,7 @@ Enregistrement du document au Format TSF (Trotec Spool File) pour decoupeuses la
 			<param name="jobname" type="string" _gui-text="Nom du Job : ">Job</param>
 			<param name="jobnumber" type="int" _gui-text="Position du Job : ">1</param>
   			<param name="onlyselection" type="boolean" _gui-text="Exporter uniquement la selection">false</param>
+  			<param name="optimize" type="boolean" _gui-text="Optimiser l'ordre des découpes">false</param>
 			<param name="resolution" type="optiongroup" appearance="minimal" _gui-text="Résolution : ">
 				<_option value="125">125dpi</_option>
 				<_option value="250">250dpi</_option>

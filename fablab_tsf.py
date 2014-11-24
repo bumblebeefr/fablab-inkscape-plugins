@@ -6,9 +6,11 @@ import platform
 import sys
 import tempfile
 import simplestyle
+import math
 
 from fablab_lib import *
 from fablab_tsf_lib import TsfFile
+from fablab_path_lib import Polyline, Segment
 
 TROTEC_COLORS = [
     '#ff0000',
@@ -44,6 +46,7 @@ class TsfEffect(BaseEffect):
         self.OptionParser.add_option('--cutline', action='store', type='choice', choices=['none', 'circular', 'rectangular', 'optimized'], default='none')
         self.OptionParser.add_option('--spoolpath', action='store', type='string', default='')
         self.OptionParser.add_option('--onlyselection', action="store", type='choice', choices=['true', 'false'], default='false')
+        self.OptionParser.add_option('--optimize', action="store", type='choice', choices=['true', 'false'], default='false')
 
     def get_size_and_offset(self, file_path):
         if(self.onlyselected()):
@@ -66,6 +69,27 @@ class TsfEffect(BaseEffect):
 
     def onlyselected(self):
         return self.selected and self.options.onlyselection == 'true'
+
+    def job_filepath(self, w, h):
+        filepath = os.path.join(self.options.spoolpath, "%s_%sx%s.tsf" % (self.options.jobname, int(math.ceil(float(w))), int(math.ceil(float(h)))))
+        cnt = 1
+        while(os.path.isfile(filepath)):
+            cnt += 1
+            filepath = os.path.join(self.options.spoolpath, "%s_%sx%s_%s.tsf" % (self.options.jobname, int(math.ceil(float(w))), int(math.ceil(float(h))), cnt))
+        return filepath
+
+    def paths_to_unit_segments(self, path_nodes):
+        print_("paths_to_unit_segments",path_nodes)
+        if False:
+            for path in path_nodes:
+                for points in path_to_segments(path):
+                    print_("Mini segments : ", points)
+                    yield points
+        else:# optimise
+            for polyline in Polyline.generate_from_segments(Segment.convertToSegmentSet(path_nodes)):
+                for points in pathd_to_segments(polyline.format()):
+                    print_("Mini segments : ", points)
+                    yield points
 
     def effect(self):
         ink_args = []
@@ -112,7 +136,7 @@ class TsfEffect(BaseEffect):
 
             # start generating tsf
             if self.options.spoolpath:
-                filepath = os.path.join(self.options.spoolpath, self.options.jobname + ".tsf")
+                filepath = self.job_filepath(doc_width, doc_height)
                 output_file = open(filepath, "w")
                 tsf = TsfFile(self.options, doc_width, doc_height, doc_offset_x, doc_offset_y, output=output_file)
             else:
@@ -120,26 +144,31 @@ class TsfEffect(BaseEffect):
 
             tsf.write_header()
 
-
-            # adding polygones
-            with tsf.draw_commands() as draw_polygon:
-                for path in self.document.getroot().iterdescendants("{http://www.w3.org/2000/svg}path"):
-                    path_style = simplestyle.parseStyle(path.get('style', ''))
-                    path_color = path_style.get('stroke', None)
-                    if path_color in TROTEC_COLORS:
-                        xmin, xmax, ymin, ymax = simpletransform.computeBBox([path])
-                        if all([xmin >= 0, ymin >= 0, xmax <= doc_width, ymax <= doc_height]):
-                            r, g, b = simplestyle.parseColor(path_color)
-                            for points in path_to_segments(path):
-                                draw_polygon(r, g, b, points)
-                        path_style['stroke'] = 'none'
-                        path.set('style', simplestyle.formatStyle(path_style))
+            #get paths to cut from file, store them by color
+            paths_by_color = {}
+            for path in self.document.getroot().iterdescendants("{http://www.w3.org/2000/svg}path"):
+                path_style = simplestyle.parseStyle(path.get('style', ''))
+                path_color = path_style.get('stroke', None)
+                if path_color in TROTEC_COLORS:
+                    xmin, xmax, ymin, ymax = simpletransform.computeBBox([path])
+                    if all([xmin >= 0, ymin >= 0, xmax <= doc_width, ymax <= doc_height]):
+                        paths_by_color.setdefault(path_color, []).append(path)
 
             # generate png then bmp for engraving
             if(self.options.processmode != 'None'):
                 with tmp_file(".bmp", text=False) as tmp_bmp:
                     self.generate_bmp(tmp_bmp)
                     tsf.write_picture(tmp_bmp)
+
+            # adding polygones
+            with tsf.draw_commands() as draw_polygon:
+                for path_color in paths_by_color:
+                    r, g, b = simplestyle.parseColor(path_color)
+                    print_('paths_by_color[path_color]',paths_by_color[path_color])
+                    for points in self.paths_to_unit_segments(paths_by_color[path_color]):
+                        draw_polygon(r, g, b, points)
+                        path_style['stroke'] = 'none'
+                        path.set('style', simplestyle.formatStyle(path_style))
 
             if output_file:
                 try:

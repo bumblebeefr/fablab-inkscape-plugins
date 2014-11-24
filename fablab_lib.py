@@ -48,11 +48,12 @@ def execute_command(*popenargs, **kwargs):
 
 
 def inkscape_command(*args):
-    print_("Colling inkscape with", args)
+    print_("Calling inkscape with", args)
     return execute_command(['inkscape'] + [str(arg) for arg in args])
 
 
 def convert_command(*args):
+    print_("Calling im convert with", args)
     return execute_command(['convert'] + [str(arg) for arg in args])
 
 
@@ -90,8 +91,8 @@ def print_(*arg):
 
 def path_to_segments(node):
     '''
-        Generator to convert a path node to an interator to 
-        segmented paths (bezier curves broken to approximated 
+        Generator to convert a path node to an interator on
+        segmented paths (bezier curves broken to approximated
         straights lines).
     '''
     mat = simpletransform.composeParents(node, [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
@@ -102,6 +103,29 @@ def path_to_segments(node):
 
     p = cubicsuperpath.parsePath(d)
     simpletransform.applyTransformToPath(mat, p)
+
+    # p is now a list of lists of cubic beziers [ctrl p1, ctrl p2, endpoint]
+    # where the start-point is the last point in the previous segment
+
+    for sp in p:
+        path = []
+        subdivideCubicPath(sp, 0.2)  # TODO: smoothness preference
+        for csp in sp:
+            path.append([csp[1][0], csp[1][1]])
+        yield path
+
+
+def pathd_to_segments(d):
+    '''
+        Generator to convert a path def to an interator on
+        segmented paths (bezier curves broken to approximated
+        straights lines).
+    '''
+
+    if len(simplepath.parsePath(d)) == 0:
+        return
+
+    p = cubicsuperpath.parsePath(d)
 
     # p is now a list of lists of cubic beziers [ctrl p1, ctrl p2, endpoint]
     # where the start-point is the last point in the previous segment

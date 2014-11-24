@@ -91,6 +91,6 @@ class TsfFile:
 
     def _draw_polygon(self, r, g, b, points):
         o = [len(points), r, g, b]
-        for point in ([self.toDots(x - self.offset_x), self.toDots(y - self.offset_x)] for x, y in points):
+        for point in ([self.toDots(x - self.offset_x), self.toDots(y - self.offset_y)] for x, y in points):
             o.extend(point)
         self.out.write('<DrawPolygon: %s>\n' % ";".join((str(i) for i in o)))
