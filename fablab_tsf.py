@@ -157,7 +157,7 @@ class TsfEffect(BaseEffect):
                 if path_color in TROTEC_COLORS:
                     xmin, xmax, ymin, ymax = simpletransform.computeBBox([path])
                     if all([xmin >= 0, ymin >= 0, xmax <= doc_width, ymax <= doc_height]):
-                        path_style['stroke'] = 'none'
+                        path_style['stroke-opacity'] = '0'
                         path.set('style', simplestyle.formatStyle(path_style))
                         paths_by_color.setdefault(path_color, []).append(path)
 
