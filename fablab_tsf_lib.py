@@ -1,6 +1,7 @@
 # encoding: utf-8
 
 import os
+import stat
 import sys
 import bezmisc
 import cspsubdiv
@@ -74,13 +75,13 @@ class TsfFile:
         self.out.write('<EndGroup: Header>\n')
 
     def write_picture(self, image_path):
-        if image_path is not None and os.path.isfile(image_path):
+        if image_path is not None and os.path.isfile(image_path) and os.stat(image_path)[stat.ST_SIZE]:
             self.out.write('<BegGroup: Bitmap>\n')
             self.out.write('<STBmp: 0;0>')
             with open(image_path, 'rb') as image:
                 self.out.write(image.read())
             self.out.write('<EOBmp>\n')
-            self.out.write('<EndGroup: Bitmap>n/')
+            self.out.write('<EndGroup: Bitmap>\n')
 
     @contextmanager
     def draw_commands(self):
