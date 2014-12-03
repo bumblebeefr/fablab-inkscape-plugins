@@ -57,6 +57,11 @@ def convert_command(*args):
     return execute_command(['convert'] + [str(arg) for arg in args])
 
 
+def identify_command(*args):
+    print_("Calling im identify with", args)
+    return execute_command(['identify'] + [str(arg) for arg in args])
+
+
 @contextmanager
 def tmp_file(ext, text=True):
     '''

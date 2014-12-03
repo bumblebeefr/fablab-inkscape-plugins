@@ -63,9 +63,14 @@ class TsfEffect(BaseEffect):
                     inkscape_command(tmp_svg, '-z', '-C', '-b', '#ffffff', '-y', '1', '-d', self.options.resolution, '-e', tmp_png)
 
                 if(self.options.processmode in ['Layer', 'Relief']):
-                    convert_command(tmp_png, '-flip', '-separate', '-average', '-colorspace', 'Gray', '-ordered-dither', 'h8x8a,256', '-depth', '8', '-alpha', 'off', '-compress', 'NONE', '-colors', '256', 'BMP3:%s' % tmp_bmp)
+                    #convert_command(tmp_png, '-flip', '-separate', '-average', '-colorspace', 'Gray', '-ordered-dither', 'h8x8a,256', '-depth', '8', '-alpha', 'off', '-compress', 'NONE', '-colors', '256', 'BMP3:%s' % tmp_bmp)
+                    #convert_command(tmp_png, '-flip', '-level', '0%,100%,4.0', '-separate', '-average', '-colorspace', 'Gray', '-ordered-dither', 'o8x8,16', '-depth', '8', '-alpha', 'off', '-compress', 'NONE', '-colors', '256', 'BMP3:%s' % tmp_bmp)
+                    convert_command(tmp_png, '-flip', '-level', '0%,100%,4.0', '-separate', '-average', '-colorspace', 'Gray', '-ordered-dither', 'o8x8,16', '-remap', os.path.join(os.getcwd(), 'fablab_grayscale.bmp'), 'BMP3:%s' % tmp_bmp)
+
                 else:
-                    convert_command(tmp_png, '-flip', '-separate', '-average', '-colorspace', 'Gray', '-ordered-dither', 'h4x4a', '-monochrome', tmp_bmp)
+                    #convert_command(tmp_png, '-flip', '-separate', '-average', '-colorspace', 'Gray', '-ordered-dither', 'h8x8a,256', '-depth', '8', '-alpha', 'off', '-compress', 'NONE', '-colors', '256', 'BMP3:%s' % tmp_bmp)
+                    #convert_command(tmp_png, '-flip', '-separate', '-average', '-colorspace', 'Gray', '-ordered-dither', 'h4x4a', '-monochrome', '-depth', '1', '-alpha', 'off', '-compress', 'NONE', '-colors', '2', 'BMP3:%s' % tmp_bmp)
+                    convert_command(tmp_png, '-flip', '-level', '0%,100%,4.0', '-separate', '-average', '-colorspace', 'Gray', '-ordered-dither', 'h4x4a', '-remap', os.path.join(os.getcwd(), 'fablab_monochrome.bmp'), 'BMP3:%s' % tmp_bmp)
 
     def onlyselected(self):
         return self.selected and self.options.onlyselection == 'true'
@@ -152,23 +157,26 @@ class TsfEffect(BaseEffect):
                 if path_color in TROTEC_COLORS:
                     xmin, xmax, ymin, ymax = simpletransform.computeBBox([path])
                     if all([xmin >= 0, ymin >= 0, xmax <= doc_width, ymax <= doc_height]):
+                        path_style['stroke'] = 'none'
+                        path.set('style', simplestyle.formatStyle(path_style))
                         paths_by_color.setdefault(path_color, []).append(path)
 
             # generate png then bmp for engraving
             if(self.options.processmode != 'None'):
                 with tmp_file(".bmp", text=False) as tmp_bmp:
                     self.generate_bmp(tmp_bmp)
-                    tsf.write_picture(tmp_bmp)
+                    if(identify_command('-format', '%k', tmp_bmp).strip() != "1"):  # If more than one color in png output
+                        tsf.write_picture(tmp_bmp)
+                    else:
+                        inkex.errormsg(u"Gravure desactivé pour ce job, il semble ne rien y avoir à graver.")
 
             # adding polygones
             with tsf.draw_commands() as draw_polygon:
                 for path_color in paths_by_color:
                     r, g, b = simplestyle.parseColor(path_color)
-                    print_('paths_by_color[path_color]',paths_by_color[path_color])
+                    print_('paths_by_color[path_color]', paths_by_color[path_color])
                     for points in self.paths_to_unit_segments(paths_by_color[path_color]):
                         draw_polygon(r, g, b, points)
-                        path_style['stroke'] = 'none'
-                        path.set('style', simplestyle.formatStyle(path_style))
 
             if output_file:
                 try:
