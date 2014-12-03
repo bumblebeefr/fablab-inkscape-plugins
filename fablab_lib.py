@@ -54,12 +54,13 @@ def inkscape_command(*args):
 
 def convert_command(*args):
     print_("Calling im convert with", args)
-    return execute_command(['convert'] + [str(arg) for arg in args])
+
+    return execute_command(subprocess.list2cmdline(['convert'] + [str(arg) for arg in args]), shell=True)
 
 
 def identify_command(*args):
     print_("Calling im identify with", args)
-    return execute_command(['identify'] + [str(arg) for arg in args])
+    return execute_command(subprocess.list2cmdline(['identify'] + [str(arg) for arg in args]), shell=True)
 
 
 @contextmanager
