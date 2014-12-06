@@ -7,6 +7,7 @@ import sys
 import tempfile
 import simplestyle
 import math
+import time
 
 from fablab_lib import *
 from fablab_tsf_lib import TsfFile
@@ -65,12 +66,12 @@ class TsfEffect(BaseEffect):
                 if(self.options.processmode in ['Layer', 'Relief']):
                     #convert_command(tmp_png, '-flip', '-separate', '-average', '-colorspace', 'Gray', '-ordered-dither', 'h8x8a,256', '-depth', '8', '-alpha', 'off', '-compress', 'NONE', '-colors', '256', 'BMP3:%s' % tmp_bmp)
                     #convert_command(tmp_png, '-flip', '-level', '0%,100%,4.0', '-separate', '-average', '-colorspace', 'Gray', '-ordered-dither', 'o8x8,16', '-depth', '8', '-alpha', 'off', '-compress', 'NONE', '-colors', '256', 'BMP3:%s' % tmp_bmp)
-                    convert_command(tmp_png, '-flip', '-level', '0%,100%,4.0', '-separate', '-average', '-colorspace', 'Gray', '-ordered-dither', 'o8x8,16', '-remap', os.path.join(os.getcwd(), 'fablab_grayscale.bmp'), 'BMP3:%s' % tmp_bmp)
+                    convert_command(tmp_png, '-flip', '-level', '0%,100%,4.0', '-separate', '-average', '-colorspace', 'Gray', '-ordered-dither', 'o8x8,16', '-depth', '8', '-alpha', 'off', '-remap', os.path.join(os.getcwd(), 'fablab_grayscale.bmp'), '-compress', 'NONE', 'BMP3:%s' % tmp_bmp)
 
                 else:
                     #convert_command(tmp_png, '-flip', '-separate', '-average', '-colorspace', 'Gray', '-ordered-dither', 'h8x8a,256', '-depth', '8', '-alpha', 'off', '-compress', 'NONE', '-colors', '256', 'BMP3:%s' % tmp_bmp)
                     #convert_command(tmp_png, '-flip', '-separate', '-average', '-colorspace', 'Gray', '-ordered-dither', 'h4x4a', '-monochrome', '-depth', '1', '-alpha', 'off', '-compress', 'NONE', '-colors', '2', 'BMP3:%s' % tmp_bmp)
-                    convert_command(tmp_png, '-flip', '-level', '0%,100%,4.0', '-separate', '-average', '-colorspace', 'Gray', '-ordered-dither', 'h4x4a', '-remap', os.path.join(os.getcwd(), 'fablab_monochrome.bmp'), 'BMP3:%s' % tmp_bmp)
+                    convert_command(tmp_png, '-flip', '-level', '0%,100%,4.0', '-separate', '-average', '-colorspace', 'Gray', '-ordered-dither', 'o8x8', '-remap', os.path.join(os.getcwd(), 'fablab_monochrome.bmp'), '-compress', 'NONE', 'BMP3:%s' % tmp_bmp)
 
     def onlyselected(self):
         return self.selected and self.options.onlyselection == 'true'
@@ -91,12 +92,14 @@ class TsfEffect(BaseEffect):
                     print_("Mini segments : ", points)
                     yield points
         else:# optimise
-            for polyline in Polyline.generate_from_segments(Segment.convertToSegmentSet(path_nodes)):
+            #for polyline in Polyline.generate_from_segments(Segment.convertToSegmentSet(path_nodes)):
+            for polyline in Polyline.generate_from_segment_array(list(Segment.convertToSegmentSet(path_nodes))):
                 for points in pathd_to_segments(polyline.format()):
                     print_("Mini segments : ", points)
                     yield points
 
     def effect(self):
+        start_time = time.time()
         ink_args = []
 
         if(self.options.spoolpath):
@@ -167,8 +170,6 @@ class TsfEffect(BaseEffect):
                     self.generate_bmp(tmp_bmp)
                     if(identify_command('-format', '%k', tmp_bmp).strip() != "1"):  # If more than one color in png output
                         tsf.write_picture(tmp_bmp)
-                    else:
-                        inkex.errormsg(u"Gravure desactivé pour ce job, il semble ne rien y avoir à graver.")
 
             # adding polygones
             with tsf.draw_commands() as draw_polygon:
@@ -178,15 +179,25 @@ class TsfEffect(BaseEffect):
                     for points in self.paths_to_unit_segments(paths_by_color[path_color]):
                         draw_polygon(r, g, b, points)
 
+            end_time = time.time()
+
+            inkex.errormsg(u"========= Génération du fichier TSF effectuée. =========\n")
+            inkex.errormsg(u" - Dimensions : %s mm" % "x".join([str(round(s, 2)) for s in tsf.header.get('Size')]))
+            if(tsf.picture):
+                inkex.errormsg(u" - Gravure : %s" % tsf.header.get('ProcessMode'))
+            else:
+                inkex.errormsg(u" - Gravure : Aucune")
+            inkex.errormsg(u" - Nombre de couleurs : %s" % len(paths_by_color.keys()))
+            inkex.errormsg(u"\n Export effectué en %ss" % round(end_time - start_time,1))
+
             if output_file:
                 try:
                     output_file.close()
                 except OSError:
                     pass
-                finally:
-                    inkex.errormsg(u" ☯ Génération du fichier TSF effectuée.")
             else:
-                inkex.errormsg(u" ☯ Génération du fichier TSF effectuée, cliquer sur valider pour terminer l'enregistrement du fichier.")
+                inkex.errormsg(u"\n Cliquer sur valider pour terminer l'enregistrement du fichier.")
+
 
 if __name__ == '__main__':
     TsfEffect().affect(output=False)
