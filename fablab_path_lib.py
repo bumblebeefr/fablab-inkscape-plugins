@@ -311,9 +311,15 @@ class Segment:
         return output
 
     @classmethod
-    def convertToSegments(cls, path):
+    def convertToSegments(cls, path_node):
         path_start = None
         currentPoint = None
+
+        # work on copy to be shure not breaking anything
+        path = copy.deepcopy(path_node)
+
+        # apply transformation info on path, otherwise dealing with transform would be a mess
+        simpletransform.fuseTransform(path)
 
         for cmd, params in simplepath.parsePath(path.get('d')):
             print_('cmd, params', cmd, params)

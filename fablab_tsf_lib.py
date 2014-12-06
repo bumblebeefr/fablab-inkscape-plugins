@@ -38,6 +38,7 @@ class TsfFile:
         self.offset_x, self.offset_y = float(offset_x), float(offset_y)
         self.header['Size'] = (self.toMm(w), self.toMm(h))
         self.out = output
+        self.picture = False
 
     def toDots(self, val):
         return int(round(1.0 * inkex.uutounit(inkex.unittouu(str(val)), 'in') * self.header.get('Resolution')))
@@ -75,6 +76,7 @@ class TsfFile:
         self.out.write('<EndGroup: Header>\n')
 
     def write_picture(self, image_path):
+        self.picture = True
         if image_path is not None and os.path.isfile(image_path) and os.stat(image_path)[stat.ST_SIZE]:
             self.out.write('<BegGroup: Bitmap>\n')
             self.out.write('<STBmp: 0;0>')
