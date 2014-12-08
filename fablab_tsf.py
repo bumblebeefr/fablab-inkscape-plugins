@@ -85,17 +85,14 @@ class TsfEffect(BaseEffect):
         return filepath
 
     def paths_to_unit_segments(self, path_nodes):
-        print_("paths_to_unit_segments", path_nodes)
         if self.options.optimize == 'false':
             for path in path_nodes:
                 for points in path_to_segments(path):
-                    print_("Mini segments : ", points)
                     yield points
         else:# optimise
             #for polyline in Polyline.generate_from_segments(Segment.convertToSegmentSet(path_nodes)):
             for polyline in Polyline.generate_from_segment_array(list(Segment.convertToSegmentSet(path_nodes))):
                 for points in pathd_to_segments(polyline.format()):
-                    print_("Mini segments : ", points)
                     yield points
 
     def effect(self):
