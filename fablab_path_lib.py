@@ -213,7 +213,11 @@ class Segment:
         self.start = roundValues(start)
         self.end = roundValues(end)
         self.command = command
-        self.extra_parameters = roundValues(extra_parameters)
+        self.pathdefs = simplepath.pathdefs.get(command)
+        self.extra_parameters = list(extra_parameters)
+        for i, p in enumerate(extra_parameters):
+            if(self.pathdefs[3][i] == 'float'):
+                self.extra_parameters[i] = roundValue(p)
         self.used = False
 
     def start_point(self):
@@ -265,6 +269,9 @@ class Segment:
         elif self.command == 'C':
             self.end, self.start = self.start, self.end
             self.extra_parameters[:2], self.extra_parameters[2:4] = self.extra_parameters[2:4], self.extra_parameters[:2]
+        elif self.command == 'A':
+            self.end, self.start = self.start, self.end
+            self.extra_parameters[4] = (self.extra_parameters[4] + 1) % 2
         else:
             inkex.errormsg("Path Command %s can't be reversed Yet" % self.command)
 
@@ -334,6 +341,10 @@ class Segment:
 
             elif (cmd == 'C'):
                 yield Segment(currentPoint, params[-2:], command='C', extra_parameters=params[:-2])
+                currentPoint = params[-2:]
+
+            elif (cmd == 'A'):
+                yield Segment(currentPoint, params[-2:], command='A', extra_parameters=params[:-2])
                 currentPoint = params[-2:]
 
             elif (cmd == 'Z'):
