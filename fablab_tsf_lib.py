@@ -69,7 +69,9 @@ class TsfFile:
 
         self._simple_header_out('MaterialGroup', 'Standard')
         self._simple_header_out('MaterialName', 'Standard')
-        self._simple_header_out('JobName', 'bbb_sq10')
+
+        self.out.write("<JobName: %s>\n" % self.header.get('JobName', 'job').encode("iso-8859-1"))
+
         self._simple_header_out('JobNumber', '2')
         self._simple_header_out('Resolution', '500')
         self._simple_header_out('Cutline', 'none')
@@ -93,6 +95,7 @@ class TsfFile:
             self.out.write('<EndGroup: DrawCommands>\n')
 
     def _draw_polygon(self, r, g, b, points):
+        print_("points", points)
         o = [len(points), r, g, b]
         for point in ([self.toDots(x - self.offset_x), self.toDots(y - self.offset_y)] for x, y in points):
             o.extend(point)
