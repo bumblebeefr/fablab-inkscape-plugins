@@ -4,6 +4,7 @@ from collections import namedtuple
 import os
 import tempfile
 import subprocess
+from distutils import spawn
 
 import cubicsuperpath
 import simplepath
@@ -14,7 +15,7 @@ import inkex
 import platform
 
 DEBUG = False
-#DEBUG = True
+DEBUG = True
 
 
 def execute_command(*popenargs, **kwargs):
@@ -53,6 +54,20 @@ def execute_command(*popenargs, **kwargs):
 def inkscape_command(*args):
     print_("Calling inkscape with", args)
     return execute_command(['inkscape'] + [str(arg) for arg in args])
+
+
+def inkscapeX_command(*args):
+    print_("Calling inkscape X command with", args)
+    bash = spawn.find_executable("bash")
+    try:
+        if bash and spawn.find_executable("Xvfb"):
+            print_("It seems that xvfb is callable !")
+            return execute_command([bash, 'fablab_headless_inkscape.sh'] + [str(arg) for arg in args])
+    except Exception as e:
+        print_("Ooops en fait ça a planté", e)
+        return inkscape_command(*args)
+
+    return inkscape_command(*args)
 
 
 def convert_command(*args):
@@ -223,9 +238,12 @@ class BaseEffect(inkex.Effect):
             self.getdocids()
 
     @contextmanager
-    def inkscaped(self, arguments=[]):
+    def inkscaped(self, arguments=[], needX=False):
         with self.as_tmp_svg() as tmp:
             ink_args = ["--file", tmp] + arguments + ["--verb=FileSave", "--verb=FileClose"]
-            inkscape_command(*ink_args)
+            if needX:
+                inkscapeX_command(*ink_args)
+            else:
+                inkscape_command(*ink_args)
             with self.reloaded_from_file(tmp):
                 yield tmp

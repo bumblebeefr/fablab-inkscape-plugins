@@ -130,7 +130,7 @@ class TsfEffect(BaseEffect):
         ink_args.append("--verb=EditSelectAll")
         ink_args.append("--verb=ObjectToPath")
 
-        with self.inkscaped(ink_args) as tmp:
+        with self.inkscaped(ink_args, needX=True) as tmp:
             # get document size to test if path are in visble zone
             doc_width, doc_height = inkex.unittouu(self.document.getroot().get('width')), inkex.unittouu(self.document.getroot().get('height'))
             output_file = None
