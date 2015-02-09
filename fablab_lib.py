@@ -13,6 +13,9 @@ import cspsubdiv
 import inkex
 import platform
 
+DEBUG = False
+#DEBUG = True
+
 
 def execute_command(*popenargs, **kwargs):
     r"""Run command with arguments and return its output as a byte string.
@@ -87,12 +90,13 @@ def print_(*arg):
     '''
         Print out debug message on fablab_debug.log in inkscape extension directory.
     '''
-    f = open("fablab_debug.log", "a")
-    for s in arg:
-        s = str(unicode(s).encode('unicode_escape')) + " "
-        f.write(s)
-    f.write("\n")
-    f.close()
+    if DEBUG:
+        f = open("fablab_debug.log", "a")
+        for s in arg:
+            s = str(unicode(s).encode('unicode_escape')) + " "
+            f.write(s)
+        f.write("\n")
+        f.close()
 
 
 def path_to_segments(node):
