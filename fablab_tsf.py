@@ -49,12 +49,6 @@ class TsfEffect(BaseEffect):
         self.OptionParser.add_option('--onlyselection', action="store", type='choice', choices=['true', 'false'], default='false')
         self.OptionParser.add_option('--optimize', action="store", type='choice', choices=['true', 'false'], default='false')
 
-    def get_size_and_offset(self, file_path):
-        if(self.onlyselected()):
-            return inkscape_command('-z', '-W', file_path), inkscape_command('-z', '-H', file_path), inkscape_command('-z', '-X', file_path), inkscape_command('-z', '-Y', file_path)
-        else:
-            return inkex.unittouu(self.document.getroot().get('width')), inkex.unittouu(self.document.getroot().get('height')), 0, 0
-
     def generate_bmp(self, tmp_bmp):
         with tmp_file(".png", text=False) as tmp_png:
             with self.as_tmp_svg() as tmp_svg:
@@ -110,6 +104,8 @@ class TsfEffect(BaseEffect):
                 ink_args.append('--select=%s' % k)
             ink_args.append("--verb=EditInvert")
             ink_args.append("--verb=EditDelete")
+            ink_args.append("--verb=FitCanvasToDrawing")
+
 
         # unlink clones
         for node in self.document.getroot().iterdescendants("{http://www.w3.org/2000/svg}use"):
@@ -136,16 +132,16 @@ class TsfEffect(BaseEffect):
 
         with self.inkscaped(ink_args) as tmp:
             # get document size to test if path are in visble zone
-            doc_width, doc_height, doc_offset_x, doc_offset_y = self.get_size_and_offset(tmp)
+            doc_width, doc_height = inkex.unittouu(self.document.getroot().get('width')), inkex.unittouu(self.document.getroot().get('height'))
             output_file = None
 
             # start generating tsf
             if self.options.spoolpath:
                 filepath = self.job_filepath(doc_width, doc_height)
                 output_file = open(filepath, "w")
-                tsf = TsfFile(self.options, doc_width, doc_height, doc_offset_x, doc_offset_y, output=output_file)
+                tsf = TsfFile(self.options, doc_width, doc_height, output=output_file)
             else:
-                tsf = TsfFile(self.options, doc_width, doc_height, doc_offset_x, doc_offset_y)
+                tsf = TsfFile(self.options, doc_width, doc_height)
 
             tsf.write_header()
 
@@ -172,20 +168,19 @@ class TsfEffect(BaseEffect):
             with tsf.draw_commands() as draw_polygon:
                 for path_color in paths_by_color:
                     r, g, b = simplestyle.parseColor(path_color)
-                    print_('paths_by_color[path_color]', paths_by_color[path_color])
+                    #print_('paths_by_color[path_color]', paths_by_color[path_color])
                     for points in self.paths_to_unit_segments(paths_by_color[path_color]):
                         draw_polygon(r, g, b, points)
 
             end_time = time.time()
 
-            inkex.errormsg(u"========= Génération du fichier TSF effectuée. =========\n")
             inkex.errormsg(u" - Dimensions : %s mm" % "x".join([str(round(s, 2)) for s in tsf.header.get('Size')]))
             if(tsf.picture):
                 inkex.errormsg(u" - Gravure : %s" % tsf.header.get('ProcessMode'))
             else:
                 inkex.errormsg(u" - Gravure : Aucune")
             inkex.errormsg(u" - Nombre de couleurs : %s" % len(paths_by_color.keys()))
-            inkex.errormsg(u"\n Export effectué en %ss" % round(end_time - start_time,1))
+            inkex.errormsg(u" - Export effectué en %ss" % round(end_time - start_time, 1))
 
             if output_file:
                 try:
