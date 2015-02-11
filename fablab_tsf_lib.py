@@ -67,9 +67,8 @@ class TsfFile:
         if self.header.get('ProcessMode') == 'Stamp':
             self.out.write("<StampShoulder: %s>\n" % self.header.get('StampShoulder', 'flat'))
 
-        self._simple_header_out('MaterialGroup', 'Standard')
-        self._simple_header_out('MaterialName', 'Standard')
-
+        self.out.write("<MaterialGroup: %s>\n" % self.header.get('MaterialGroup', 'Standard').encode("iso-8859-1"))
+        self.out.write("<MaterialName: %s>\n" % self.header.get('MaterialName', 'Standard').encode("iso-8859-1"))
         self.out.write("<JobName: %s>\n" % self.header.get('JobName', 'job').encode("iso-8859-1"))
 
         self._simple_header_out('JobNumber', '2')
