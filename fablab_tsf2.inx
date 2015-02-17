@@ -22,7 +22,7 @@ Enregistrement du document au Format TSF (Trotec Spool File) pour decoupeuses la
 				<_option value="333">333dpi</_option>
 				<_option value="500">500dpi</_option>
 				<_option value="600">600dpi</_option>
-				<_option value="1000">1000dpi</_option>
+<!-- 				<_option value="1000">1000dpi</_option> -->
 			</param>
 			<param name="cutline" type="optiongroup" appearance="minimal" _gui-text="Contour de decoupe additionel : ">
 				<_option value="none">Aucun</_option>
