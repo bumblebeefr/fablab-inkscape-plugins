@@ -23,8 +23,8 @@ def print_(*arg):
     f.close()
 
 
-# precision to 1/100 px should be sufficient for designs in mm ?
-PRECISION = 100
+# precision to 1/10 px should be sufficient for designs in mm ?
+PRECISION = 10
 
 
 def roundValues(arr):
