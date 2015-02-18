@@ -15,7 +15,7 @@ import inkex
 import platform
 
 DEBUG = False
-DEBUG = True
+#DEBUG = True
 
 
 def execute_command(*popenargs, **kwargs):
@@ -202,6 +202,12 @@ class BaseEffect(inkex.Effect):
     def __init__(self):
         inkex.Effect.__init__(self)
 
+        if not hasattr(self, 'uutounit'):
+            self.uutounit = inkex.uutounit
+
+        if not hasattr(self, 'unittouu'):
+            self.unittouu = inkex.unittouu
+
     @contextmanager
     def as_tmp_svg(self):
         '''
@@ -240,7 +246,7 @@ class BaseEffect(inkex.Effect):
     @contextmanager
     def inkscaped(self, arguments=[], needX=False):
         with self.as_tmp_svg() as tmp:
-            ink_args = ["--file", tmp] + arguments + ["--verb=FileSave", "--verb=FileClose"]
+            ink_args = ["--file", tmp] + arguments + ["--verb=FileSave", "--verb=FileQuit"]
             if needX:
                 inkscapeX_command(*ink_args)
             else:

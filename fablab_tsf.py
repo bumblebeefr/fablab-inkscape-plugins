@@ -10,7 +10,7 @@ import math
 import time
 
 from fablab_lib import *
-from fablab_tsf_lib import TsfFile
+from fablab_tsf_lib import TsfFileEffect
 from fablab_path_lib import Polyline, Segment
 
 TROTEC_COLORS = [
@@ -32,7 +32,7 @@ TROTEC_COLORS = [
 ]
 
 
-class TsfEffect(BaseEffect):
+class TsfEffect(BaseEffect, TsfFileEffect):
 
     def __init__(self):
         BaseEffect.__init__(self)
@@ -48,6 +48,7 @@ class TsfEffect(BaseEffect):
         self.OptionParser.add_option('--spoolpath', action='store', type='string', default='')
         self.OptionParser.add_option('--onlyselection', action="store", type='choice', choices=['true', 'false'], default='false')
         self.OptionParser.add_option('--optimize', action="store", type='choice', choices=['true', 'false'], default='false')
+        self.OptionParser.add_option('--report', action="store", type='choice', choices=['true', 'false'], default='true')
 
     def generate_bmp(self, tmp_bmp):
         with tmp_file(".png", text=False) as tmp_png:
@@ -132,20 +133,23 @@ class TsfEffect(BaseEffect):
 
         with self.inkscaped(ink_args, needX=True) as tmp:
             # get document size to test if path are in visble zone
-            doc_width, doc_height = inkex.unittouu(self.document.getroot().get('width')), inkex.unittouu(self.document.getroot().get('height'))
+            print_("get document size to test if path are in visble zone")
+            doc_width, doc_height = self.unittouu(self.document.getroot().get('width')), self.unittouu(self.document.getroot().get('height'))
             output_file = None
 
             # start generating tsf
+            print_("start generating tsf")
             if self.options.spoolpath:
                 filepath = self.job_filepath(doc_width, doc_height)
                 output_file = open(filepath, "w")
-                tsf = TsfFile(self.options, doc_width, doc_height, output=output_file)
+                self.initialize_tsf(self.options, doc_width, doc_height, output=output_file)
             else:
-                tsf = TsfFile(self.options, doc_width, doc_height)
+                self.initialize_tsf(self.options, doc_width, doc_height)
 
-            tsf.write_header()
+            self.write_tsf_header()
 
             #get paths to cut from file, store them by color
+            print_("get paths to cut from file, store them by color")
             paths_by_color = {}
             for path in self.document.getroot().iterdescendants("{http://www.w3.org/2000/svg}path"):
                 path_style = simplestyle.parseStyle(path.get('style', ''))
@@ -158,14 +162,16 @@ class TsfEffect(BaseEffect):
                         paths_by_color.setdefault(path_color, []).append(path)
 
             # generate png then bmp for engraving
+            print_("generate png then bmp for engraving")
             if(self.options.processmode != 'None'):
                 with tmp_file(".bmp", text=False) as tmp_bmp:
                     self.generate_bmp(tmp_bmp)
                     if(identify_command('-format', '%k', tmp_bmp).strip() != "1"):  # If more than one color in png output
-                        tsf.write_picture(tmp_bmp)
+                        self.write_tsf_picture(tmp_bmp)
 
             # adding polygones
-            with tsf.draw_commands() as draw_polygon:
+            print_("generate png then bmp for engraving")
+            with self.draw_tsf_commands() as draw_polygon:
                 for path_color in paths_by_color:
                     r, g, b = simplestyle.parseColor(path_color)
                     #print_('paths_by_color[path_color]', paths_by_color[path_color])
@@ -174,21 +180,24 @@ class TsfEffect(BaseEffect):
 
             end_time = time.time()
 
-            inkex.errormsg(u" - Dimensions : %s mm" % "x".join([str(round(s, 2)) for s in tsf.header.get('Size')]))
-            if(tsf.picture):
-                inkex.errormsg(u" - Gravure : %s" % tsf.header.get('ProcessMode'))
-            else:
-                inkex.errormsg(u" - Gravure : Aucune")
-            inkex.errormsg(u" - Nombre de couleurs : %s" % len(paths_by_color.keys()))
-            inkex.errormsg(u" - Export effectué en %ss" % round(end_time - start_time, 1))
+            # report
+            print_("End of generation printing report")
+            if self.options.report == 'true':
+                inkex.errormsg(u" - Dimensions : %s mm" % "x".join([str(round(s, 2)) for s in self.header.get('Size')]))
+                if(self.picture):
+                    inkex.errormsg(u" - Gravure : %s" % self.header.get('ProcessMode'))
+                else:
+                    inkex.errormsg(u" - Gravure : Aucune")
+                inkex.errormsg(u" - Nombre de couleurs : %s" % len(paths_by_color.keys()))
+                inkex.errormsg(u" - Export effectué en %ss" % round(end_time - start_time, 1))
 
-            if output_file:
-                try:
-                    output_file.close()
-                except OSError:
-                    pass
-            else:
-                inkex.errormsg(u"\n Cliquer sur valider pour terminer l'enregistrement du fichier.")
+                if output_file:
+                    try:
+                        output_file.close()
+                    except OSError:
+                        pass
+                else:
+                    inkex.errormsg(u"\n Cliquer sur valider pour terminer l'enregistrement du fichier.")
 
 
 if __name__ == '__main__':

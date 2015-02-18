@@ -10,9 +10,9 @@ import inkex
 from fablab_lib import *
 
 
-class TsfFile:
+class TsfFileEffect:
 
-    def __init__(self, options, w=0, h=0, offset_x=0, offset_y=0, output=sys.stdout):
+    def initialize_tsf(self, options, w=0, h=0, offset_x=0, offset_y=0, output=sys.stdout):
         """
             Object to generate a tsf file.
 
@@ -41,15 +41,15 @@ class TsfFile:
         self.picture = False
 
     def toDots(self, val):
-        return int(round(1.0 * inkex.uutounit(inkex.unittouu(str(val)), 'in') * self.header.get('Resolution')))
+        return int(round(1.0 * self.uutounit(self.unittouu(str(val)), 'in') * self.header.get('Resolution')))
 
     def toMm(self, val):
-        return inkex.uutounit(inkex.unittouu(str(val)), 'mm')
+        return self.uutounit(self.unittouu(str(val)), 'mm')
 
     def _simple_header_out(self, name, default):
         self.out.write('<%s: %s>\n' % (name, self.header.get(name, default)))
 
-    def write_header(self):
+    def write_tsf_header(self):
         self.out.write('<!-- Version: 9.4.2.1034>\n')
         self.out.write('<!-- PrintingApplication: inkscape.exe>\n')
 
@@ -76,7 +76,7 @@ class TsfFile:
         self._simple_header_out('Cutline', 'none')
         self.out.write('<EndGroup: Header>\n')
 
-    def write_picture(self, image_path):
+    def write_tsf_picture(self, image_path):
         self.picture = True
         if image_path is not None and os.path.isfile(image_path) and os.stat(image_path)[stat.ST_SIZE]:
             self.out.write('<BegGroup: Bitmap>\n')
@@ -87,8 +87,8 @@ class TsfFile:
             self.out.write('<EndGroup: Bitmap>\n')
 
     @contextmanager
-    def draw_commands(self):
-        if self.draw_commands:
+    def draw_tsf_commands(self):
+        if self.draw_tsf_commands:
             self.out.write('<BegGroup: DrawCommands>\n')
             yield self._draw_polygon
             self.out.write('<EndGroup: DrawCommands>\n')
