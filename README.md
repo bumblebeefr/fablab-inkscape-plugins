@@ -38,7 +38,7 @@ C'est une bonne idée de ne pas utiliser cette couleur pour autre chose (modifie
 
 
 ## Comment installer les plugins ?
-Telecharger [les sources au format zip](https://github.com/bumblebeefr/fablab-inkscape-plugins/archive/master.zip), en extraire les fichiers `.py` et `.inx` et les copier dans le repertoire d'extentions d'inkscape : 
+Telecharger [les sources au format zip](https://github.com/bumblebeefr/fablab-inkscape-plugins/archive/master.zip), en extraire les fichiers commencant par  `fablab_` et les copier dans le repertoire d'extentions d'inkscape : 
 * Sous gnu/linux, FreeBSD : `~/.config/inkscape/extentions/` ou `/usr/share/inkscape/extentions/`
 * Sous mac OSX : `/Applications/Inkscape.app/Contents/Resources/extensions/`
 * Sous windows : `C:\Program Files\Inkscape\share\extensions\` ou `%AppData%\inkscape\extensions\`
