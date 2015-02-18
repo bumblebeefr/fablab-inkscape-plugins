@@ -3,6 +3,8 @@ fablab-inkscape-plugins
 
 Collection de plugins inkscape utiles ans un fablab
 
+C'ets plugins sont fonctionel avec la version `0.48.5` d'inkscape, mais semblent pour le moment cassés avec la recente version `0.91`...
+
 ## Utiles pour la decoupeuse laser
 
 ### Générateur de boite
@@ -25,6 +27,7 @@ Quelques trucs à savoir :
   * Il est possible de cette façons d'exporter uniquement la selection en cochant la case appropriée
 * Les notes prises durant l'analyse de la structure des fichiers tsf sont disponible (en français) [ici](http://carrefour-numerique.cite-sciences.fr/fablab/wiki/doku.php?id=machines:decoupe_laser:tsf)
 * La generations des images noiréblanc utilisées pour la gravure n'ont pas été paufinées. À venir !
+* L'installation de Xvfb sur GNU/Linux (`sudo apt-get install xvfb` sous debian et dérivés) permet d'éviter l'affichage d'une fenetre d'inkscape supplementaire durant l'export et d'abaisser legerement le temps d'export)
 
 ## Imprimante/découpeuse vinyle Roland type BN20
 Plugin d'enregistrement au format EPS, incluant la gestion de la couleur "CutContour" utilisée pour decouper le vinyle.
