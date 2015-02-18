@@ -3,7 +3,7 @@ fablab-inkscape-plugins
 
 Collection de plugins inkscape utiles ans un fablab
 
-C'ets plugins sont fonctionel avec la version `0.48.5` d'inkscape, mais semblent pour le moment cassés avec la recente version `0.91`...
+Ces plugins sont fonctionels avec les versions `0.48.x` et `0.91` d'inkscape.
 
 ## Utiles pour la decoupeuse laser
 
