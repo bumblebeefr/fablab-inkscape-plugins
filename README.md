@@ -45,5 +45,5 @@ Télécharger [les sources au format zip](https://github.com/bumblebeefr/fablab-
 
 Installer imagemagick (utilisé par le plugin d'export au format TSF pour découpeuses laser) :
 * Sous gnu/linux, FreeBSD : Installer imagemagick avec votre gestionnaire de packets préféré, ou [télécharger le binaire prépackagé](http://www.imagemagick.org/script/binary-releases.php#unix)
-* Sous mac OSX : Utiliser macport, homebrew ou [télécharger l'installeur prépackagé](http://www.imagemagick.org/script/binary-releases.php#macosx)
+* Sous mac OSX : Utiliser [macport](http://www.imagemagick.org/script/binary-releases.php#macosx) ou bien plus simplement [télécharger l'installeur prépackagé par cactuslab](http://cactuslab.com/imagemagick/assets/ImageMagick-6.9.0-0.pkg.zip)
 * Sous windows : [Télécharger l'installeur correspondant à votre version de windows](http://www.imagemagick.org/script/binary-releases.php#windows)
