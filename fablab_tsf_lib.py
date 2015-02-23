@@ -12,7 +12,7 @@ from fablab_lib import *
 
 class TsfFileEffect:
 
-    def initialize_tsf(self, options, w=0, h=0, offset_x=0, offset_y=0, output=sys.stdout):
+    def initialize_tsf(self, options, w=0, h=0, offset_x=0, offset_y=0, jobname=None, output=sys.stdout):
         """
             Object to generate a tsf file.
 
@@ -35,16 +35,18 @@ class TsfFileEffect:
             'LayerParameters': (options.layernumber, options.layeradjustement),
             'StampShoulder': options.stampshoulder
         }
+        if(jobname):
+            self.header['JobName'] = jobname
         self.offset_x, self.offset_y = float(offset_x), float(offset_y)
         self.header['Size'] = (self.toMm(w), self.toMm(h))
         self.out = output
         self.picture = False
 
     def toDots(self, val):
-        return int(round(1.0 * self.uutounit(self.unittouu(str(val)), 'in') * self.header.get('Resolution')))
+        return int(round(self.uutounit(val, 'in') * self.header.get('Resolution')))
 
     def toMm(self, val):
-        return self.uutounit(self.unittouu(str(val)), 'mm')
+        return self.uutounit(val, 'mm')
 
     def _simple_header_out(self, name, default):
         self.out.write('<%s: %s>\n' % (name, self.header.get(name, default)))
@@ -95,7 +97,8 @@ class TsfFileEffect:
 
     def _draw_polygon(self, r, g, b, points):
         print_("points", points)
-        o = [len(points), r, g, b]
-        for point in ([self.toDots(x - self.offset_x), self.toDots(y - self.offset_y)] for x, y in points):
-            o.extend(point)
-        self.out.write('<DrawPolygon: %s>\n' % ";".join((str(i) for i in o)))
+        if points and len(points) > 1:
+            o = [len(points), r, g, b]
+            for point in ([self.toDots(x - self.offset_x), self.toDots(y - self.offset_y)] for x, y in points):
+                o.extend(point)
+            self.out.write('<DrawPolygon: %s>\n' % ";".join((str(i) for i in o)))
