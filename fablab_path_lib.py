@@ -27,12 +27,20 @@ def print_(*arg):
 PRECISION = 10
 
 
+def update_precision_factor(precision):
+    # Not the best way to do it, may need a little bit of refactoring
+    # to handle precision correctly with document unit :/
+    '''Set precision value. by default 10 for 1/10 precision.'''
+    global PRECISION
+    PRECISION = precision
+
+
 def roundValues(arr):
     return [roundValue(val) for val in arr]
 
 
 def roundValue(val):
-    return round(val, PRECISION)
+    return round(val, int(round(PRECISION)))
 
 
 def similar(a, b):
@@ -100,26 +108,6 @@ class Polyline:
         x1, y1 = self.end_point()
         x2, y2 = polyline.end_point()
         return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
-
-    @classmethod
-    def generate_from_segments(cls, segments):
-        ''' Generate (yield) polylines(array of consecutive segments) from the specified segments.
-            This sort segement to have the minimu distance between each, then generate polyline with
-            consecutives segments. Fast method, globaly generate polyline but may have some trouble
-            when having no closed shapes and all polylines may not be fully merged.
-        '''
-        arr = list(segments)
-        polyline = None
-        for segment in Segment.sorted_generator(arr):
-            if polyline is None:
-                polyline = Polyline(segment)
-            elif not similar(segment.start_point(), polyline.end_point()):
-                yield polyline
-                polyline = Polyline(segment)
-            else:
-                polyline.append(segment)
-        if polyline is not None:
-            yield polyline
 
     @classmethod
     def generate_from_segment_array(cls, arr):
@@ -284,31 +272,6 @@ class Segment:
         x1, y1 = self.end_point()
         x2, y2 = segment.end_point()
         return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
-
-    @classmethod
-    def sorted_generator(cls, arr):
-        last_segment = Segment([0, 0], [0, 0])
-        while len(arr) > 0:
-            next_segment = None
-            dist = None
-            print_("arr", arr)
-            for segment in arr:
-                if(next_segment is None):
-                    next_segment = segment
-                    dist = last_segment.distance_to(segment)
-
-                if(last_segment.distance_to(segment) < dist):
-                    next_segment = segment
-                    dist = last_segment.distance_to(segment)
-
-                if(last_segment.distance_to_reversed(segment) < dist):
-                    segment.reverse()
-                    next_segment = segment
-                    dist = last_segment.distance_to(segment)
-
-            last_segment = next_segment
-            arr.remove(next_segment)
-            yield next_segment
 
     @classmethod
     def convertToSegmentSet(cls, paths):
