@@ -12,6 +12,7 @@ import time
 from fablab_lib import *
 from fablab_tsf_lib import TsfFileEffect
 from fablab_path_lib import Polyline, Segment
+import fablab_path_lib
 
 TROTEC_COLORS = [
     '#ff0000',
@@ -71,13 +72,15 @@ class TsfEffect(BaseEffect, TsfFileEffect):
     def onlyselected(self):
         return self.selected and self.options.onlyselection == 'true'
 
-    def job_filepath(self, w, h):
-        filepath = os.path.join(self.options.spoolpath, "%s_%sx%s.tsf" % (self.options.jobname, int(math.ceil(float(w))), int(math.ceil(float(h)))))
-        cnt = 1
+    def job_filepath(self):
+        filepath = os.path.join(self.options.spoolpath, "%s.tsf" % (self.options.jobname))
+        jobname = self.options.jobname
+        cnt = 0
         while(os.path.isfile(filepath)):
             cnt += 1
-            filepath = os.path.join(self.options.spoolpath, "%s_%sx%s_%s.tsf" % (self.options.jobname, int(math.ceil(float(w))), int(math.ceil(float(h))), cnt))
-        return filepath
+            jobname = "%s_%s" % (self.options.jobname, cnt)
+            filepath = os.path.join(self.options.spoolpath, "%s_%s.tsf" % (self.options.jobname, cnt))
+        return jobname, filepath
 
     def paths_to_unit_segments(self, path_nodes):
         if self.options.optimize == 'false':
@@ -86,6 +89,7 @@ class TsfEffect(BaseEffect, TsfFileEffect):
                     yield points
         else:# optimise
             #for polyline in Polyline.generate_from_segments(Segment.convertToSegmentSet(path_nodes)):
+            fablab_path_lib.update_precision_factor(self.unittouu("10px"))
             for polyline in Polyline.generate_from_segment_array(list(Segment.convertToSegmentSet(path_nodes))):
                 for points in pathd_to_segments(polyline.format()):
                     yield points
@@ -140,9 +144,9 @@ class TsfEffect(BaseEffect, TsfFileEffect):
             # start generating tsf
             print_("start generating tsf")
             if self.options.spoolpath:
-                filepath = self.job_filepath(doc_width, doc_height)
+                jobanme, filepath = self.job_filepath()
                 output_file = open(filepath, "w")
-                self.initialize_tsf(self.options, doc_width, doc_height, output=output_file)
+                self.initialize_tsf(self.options, doc_width, doc_height, jobname = jobanme, output=output_file)
             else:
                 self.initialize_tsf(self.options, doc_width, doc_height)
 
@@ -156,7 +160,7 @@ class TsfEffect(BaseEffect, TsfFileEffect):
                 path_color = path_style.get('stroke', None)
                 if path_color in TROTEC_COLORS:
                     xmin, xmax, ymin, ymax = simpletransform.computeBBox([path])
-                    if all([xmin >= 0, ymin >= 0, xmax <= doc_width, ymax <= doc_height]):
+                    if self.onlyselected() or all([xmin >= 0, ymin >= 0, xmax <= doc_width, ymax <= doc_height]):
                         path_style['stroke-opacity'] = '0'
                         path.set('style', simplestyle.formatStyle(path_style))
                         paths_by_color.setdefault(path_color, []).append(path)
@@ -174,7 +178,6 @@ class TsfEffect(BaseEffect, TsfFileEffect):
             with self.draw_tsf_commands() as draw_polygon:
                 for path_color in paths_by_color:
                     r, g, b = simplestyle.parseColor(path_color)
-                    #print_('paths_by_color[path_color]', paths_by_color[path_color])
                     for points in self.paths_to_unit_segments(paths_by_color[path_color]):
                         draw_polygon(r, g, b, points)
 
