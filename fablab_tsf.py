@@ -14,6 +14,8 @@ from fablab_tsf_lib import TsfFileEffect
 from fablab_path_lib import Polyline, Segment
 import fablab_path_lib
 
+from distutils import spawn
+
 TROTEC_COLORS = [
     '#ff0000',
     '#0000ff',
@@ -49,7 +51,8 @@ class TsfEffect(BaseEffect, TsfFileEffect):
         self.OptionParser.add_option('--spoolpath', action='store', type='string', default='')
         self.OptionParser.add_option('--onlyselection', action="store", type='choice', choices=['true', 'false'], default='false')
         self.OptionParser.add_option('--optimize', action="store", type='choice', choices=['true', 'false'], default='false')
-        self.OptionParser.add_option('--report', action="store", type='choice', choices=['true', 'false'], default='true')
+        self.OptionParser.add_option('--report', action="store", type='choice', choices=['true', 'false'], default='false')
+        self.OptionParser.add_option('--preview', action="store", type='choice', choices=['true', 'false'], default='false')
 
     def generate_bmp(self, tmp_bmp):
         with tmp_file(".png", text=False) as tmp_png:
@@ -165,23 +168,52 @@ class TsfEffect(BaseEffect, TsfFileEffect):
                         path.set('style', simplestyle.formatStyle(path_style))
                         paths_by_color.setdefault(path_color, []).append(path)
 
-            # generate png then bmp for engraving
-            print_("generate png then bmp for engraving")
-            if(self.options.processmode != 'None'):
-                with tmp_file(".bmp", text=False) as tmp_bmp:
+
+            with tmp_file(".bmp", text=False) as tmp_bmp:
+                # generate png then bmp for engraving
+                print_("generate png then bmp for engraving")
+                if(self.options.processmode != 'None'):
                     self.generate_bmp(tmp_bmp)
                     if(identify_command('-format', '%k', tmp_bmp).strip() != "1"):  # If more than one color in png output
                         self.write_tsf_picture(tmp_bmp)
 
-            # adding polygones
-            print_("generate png then bmp for engraving")
-            with self.draw_tsf_commands() as draw_polygon:
-                for path_color in paths_by_color:
-                    r, g, b = simplestyle.parseColor(path_color)
-                    for points in self.paths_to_unit_segments(paths_by_color[path_color]):
-                        draw_polygon(r, g, b, points)
+                # adding polygones
+                print_("generate png then bmp for engraving")
+                with self.draw_tsf_commands() as draw_polygon:
+                    for path_color in paths_by_color:
+                        r, g, b = simplestyle.parseColor(path_color)
+                        for points in self.paths_to_unit_segments(paths_by_color[path_color]):
+                            draw_polygon(r, g, b, points)
 
-            end_time = time.time()
+                end_time = time.time()
+
+                #Display preview
+                if True or self.options.preview == 'true':
+                    preview = self.generate_preview()
+                    try:
+                        if(spawn.find_executable("java")):
+                            execute_command(["java", "-jar", "fablab_tsf_previewer.jar", preview])
+                        elif(spawn.find_executable("eog")):
+                            execute_command(["eog", preview])
+                        elif(spawn.find_executable("gwenview")):
+                            execute_command(["gwenview", preview])
+                        elif(spawn.find_executable("ristretto")):
+                            execute_command(["ristretto", preview])
+                        elif(spawn.find_executable("gpicview")):
+                            execute_command(["gpicview", preview])
+                        elif(spawn.find_executable("rundll32.exe")):
+                            execute_command(["rundll32.exe", "%SystemRoot%\System32\shimgvw.dll,", "ImageView_Fullscreen", preview], shell=True)
+                        elif(spawn.find_executable("open")):
+                            execute_command(["open", "-a", "Preview", preview])
+                        else:
+                            inkex.errormsg(u"Impossible d'afficher la prévisualisation sur votre systeme")
+                    except Exception as e:
+                        inkex.errormsg(u"Impossible d'afficher la prévisualisation sur votre systeme ! %s"% e)
+                    try:
+                        pass
+                        #os.remove(preview)
+                    except OSError:
+                        pass
 
             # report
             print_("End of generation printing report")

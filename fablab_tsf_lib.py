@@ -42,6 +42,14 @@ class TsfFileEffect:
         self.out = output
         self.picture = False
 
+        # header size is in mm this is size converted to pixels
+        self.px_widh = int(round(self.uutounit(w, 'in') * options.resolution))
+        self.px_height = int(round(self.uutounit(h, 'in') * options.resolution))
+
+        # prepare image magick arguments to generate a preview of the tsf job
+        self.im_draw = ['-fill', 'none', '-strokewidth', '2']
+        self.im_draw_img = None
+
     def toDots(self, val):
         return int(round(self.uutounit(val, 'in') * self.header.get('Resolution')))
 
@@ -81,6 +89,7 @@ class TsfFileEffect:
     def write_tsf_picture(self, image_path):
         self.picture = True
         if image_path is not None and os.path.isfile(image_path) and os.stat(image_path)[stat.ST_SIZE]:
+            self.im_draw_img = image_path
             self.out.write('<BegGroup: Bitmap>\n')
             self.out.write('<STBmp: 0;0>')
             with open(image_path, 'rb') as image:
@@ -98,7 +107,29 @@ class TsfFileEffect:
     def _draw_polygon(self, r, g, b, points):
         print_("points", points)
         if points and len(points) > 1:
+            # Image magicks arguments chain to draw the preview of the jab
+            self.im_draw.append("-stroke")
+            self.im_draw.append('rgb(%s, %s, %s)' % (r, g, b))
+            self.im_draw.append("-draw")
+            self.im_draw.append("polyline %s" % " ".join(["%s,%s" % (self.toDots(x - self.offset_x), self.toDots(y - self.offset_y)) for x, y in points]))
+
+            # Draw Polygones into the tsf file
             o = [len(points), r, g, b]
             for point in ([self.toDots(x - self.offset_x), self.toDots(y - self.offset_y)] for x, y in points):
                 o.extend(point)
             self.out.write('<DrawPolygon: %s>\n' % ";".join((str(i) for i in o)))
+
+    def generate_preview(self):
+        '''Use image magick to make a jpeg preview of the job.'''
+        if(self.im_draw_img):
+            cmd_args = [self.im_draw_img, '-flip']
+        else:
+            cmd_args = ['-size', '%sx%s' % (self.px_widh, self.px_height), 'xc:white']
+
+        cmd_args.extend(self.im_draw)
+
+        fd, tmp = tempfile.mkstemp(".jpg", text=False)
+        os.close(fd)
+        cmd_args.append(tmp)
+        convert_command(*cmd_args)
+        return tmp

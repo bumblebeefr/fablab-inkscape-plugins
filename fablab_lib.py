@@ -40,7 +40,7 @@ def execute_command(*popenargs, **kwargs):
     """
     if 'stdout' in kwargs:
         raise ValueError('stdout argument not allowed, it will be overridden.')
-    process = subprocess.Popen(stdout=subprocess.PIPE, *popenargs, **kwargs)
+    process = subprocess.Popen(stdout=subprocess.PIPE, stderr=subprocess.PIPE, *popenargs, **kwargs)
     output, unused_err = process.communicate()
     retcode = process.poll()
     if retcode:
@@ -49,6 +49,11 @@ def execute_command(*popenargs, **kwargs):
             cmd = popenargs[0]
         raise RuntimeError("Exit code %s on execting command %s \n\n %s" % (retcode, cmd, output))
     return output
+
+
+def execute_async_command(args):
+    os.execlp(*args)
+    #return subprocess.Popen( *popenargs, **kwargs).pid
 
 
 def inkscape_command(*args):
@@ -79,6 +84,11 @@ def convert_command(*args):
 def identify_command(*args):
     print_("Calling im identify with", args)
     return execute_command(subprocess.list2cmdline(['identify'] + [str(arg) for arg in args]), shell=True)
+
+
+def hex_color(rgb_tuple):
+    hexcolor = '#%02x%02x%02x' % tuple([int(x) for x in rgb_tuple])
+    return hexcolor
 
 
 @contextmanager

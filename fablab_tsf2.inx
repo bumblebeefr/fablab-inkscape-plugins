@@ -37,6 +37,8 @@ Enregistrement du document au Format TSF (Trotec Spool File) pour decoupeuses la
 				<_option value="Layer">Gravure multicouches</_option>
 				<_option value="Stamp">Gravure de tampon</_option>
 			</param>
+  			<param name="report" type="boolean" _gui-text="Afficher un petit compte rendu apres génération">false</param>
+  			<param name="preview" type="boolean" _gui-text="Afficher une previualisation de la tache de découpe">false</param>
 		</page>
 		<page name="options" _gui-text="Paramètres de gravure avancés">
 			<param name="layernumber" type="int" _gui-text="Gravure multicouches - Nombre de couches : " min="1">1</param>
