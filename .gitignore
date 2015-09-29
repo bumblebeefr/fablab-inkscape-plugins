@@ -53,6 +53,10 @@ docs/_build/
 # PyBuilder
 target/
 
+
 #logs
 fablab_debug.log
-/.ropeproject
+
+#vi
+/.ropeprojecti
+*.swp
