@@ -1,20 +1,15 @@
 #!/usr/bin/env python
 # encoding: utf-8
-from contextlib import contextmanager
 import os
-import platform
-import sys
-import tempfile
 import simplestyle
-import math
 import time
 
 from fablab_lib import *
 from fablab_tsf_lib import TsfFileEffect
 from fablab_path_lib import Polyline, Segment
+from fablab_tsf2svg_lib import TsfFilePreviewer
 import fablab_path_lib
 
-from distutils import spawn
 
 TROTEC_COLORS = [
     '#ff0000',
@@ -63,13 +58,13 @@ class TsfEffect(BaseEffect, TsfFileEffect):
                     inkscape_command(tmp_svg, '-z', '-C', '-b', '#ffffff', '-y', '1', '-d', self.options.resolution, '-e', tmp_png)
 
                 if(self.options.processmode in ['Layer', 'Relief']):
-                    #convert_command(tmp_png, '-flip', '-separate', '-average', '-colorspace', 'Gray', '-ordered-dither', 'h8x8a,256', '-depth', '8', '-alpha', 'off', '-compress', 'NONE', '-colors', '256', 'BMP3:%s' % tmp_bmp)
-                    #convert_command(tmp_png, '-flip', '-level', '0%,100%,4.0', '-separate', '-average', '-colorspace', 'Gray', '-ordered-dither', 'o8x8,16', '-depth', '8', '-alpha', 'off', '-compress', 'NONE', '-colors', '256', 'BMP3:%s' % tmp_bmp)
+                    # convert_command(tmp_png, '-flip', '-separate', '-average', '-colorspace', 'Gray', '-ordered-dither', 'h8x8a,256', '-depth', '8', '-alpha', 'off', '-compress', 'NONE', '-colors', '256', 'BMP3:%s' % tmp_bmp)
+                    # convert_command(tmp_png, '-flip', '-level', '0%,100%,4.0', '-separate', '-average', '-colorspace', 'Gray', '-ordered-dither', 'o8x8,16', '-depth', '8', '-alpha', 'off', '-compress', 'NONE', '-colors', '256', 'BMP3:%s' % tmp_bmp)
                     convert_command(tmp_png, '-flip', '-level', '0%,100%,4.0', '-separate', '-average', '-colorspace', 'Gray', '-ordered-dither', 'o8x8,16', '-depth', '8', '-alpha', 'off', '-remap', os.path.join(os.getcwd(), 'fablab_grayscale.bmp'), '-compress', 'NONE', 'BMP3:%s' % tmp_bmp)
 
                 else:
-                    #convert_command(tmp_png, '-flip', '-separate', '-average', '-colorspace', 'Gray', '-ordered-dither', 'h8x8a,256', '-depth', '8', '-alpha', 'off', '-compress', 'NONE', '-colors', '256', 'BMP3:%s' % tmp_bmp)
-                    #convert_command(tmp_png, '-flip', '-separate', '-average', '-colorspace', 'Gray', '-ordered-dither', 'h4x4a', '-monochrome', '-depth', '1', '-alpha', 'off', '-compress', 'NONE', '-colors', '2', 'BMP3:%s' % tmp_bmp)
+                    # convert_command(tmp_png, '-flip', '-separate', '-average', '-colorspace', 'Gray', '-ordered-dither', 'h8x8a,256', '-depth', '8', '-alpha', 'off', '-compress', 'NONE', '-colors', '256', 'BMP3:%s' % tmp_bmp)
+                    # convert_command(tmp_png, '-flip', '-separate', '-average', '-colorspace', 'Gray', '-ordered-dither', 'h4x4a', '-monochrome', '-depth', '1', '-alpha', 'off', '-compress', 'NONE', '-colors', '2', 'BMP3:%s' % tmp_bmp)
                     convert_command(tmp_png, '-flip', '-level', '0%,100%,4.0', '-separate', '-average', '-colorspace', 'Gray', '-ordered-dither', 'o8x8', '-remap', os.path.join(os.getcwd(), 'fablab_monochrome.bmp'), '-compress', 'NONE', 'BMP3:%s' % tmp_bmp)
 
     def onlyselected(self):
@@ -90,8 +85,9 @@ class TsfEffect(BaseEffect, TsfFileEffect):
             for path in path_nodes:
                 for points in path_to_segments(path):
                     yield points
-        else:# optimise
-            #for polyline in Polyline.generate_from_segments(Segment.convertToSegmentSet(path_nodes)):
+        else:
+            # optimise
+            # for polyline in Polyline.generate_from_segments(Segment.convertToSegmentSet(path_nodes)):
             fablab_path_lib.update_precision_factor(self.unittouu("10px"))
             for polyline in Polyline.generate_from_segment_array(list(Segment.convertToSegmentSet(path_nodes))):
                 for points in pathd_to_segments(polyline.format()):
@@ -110,10 +106,9 @@ class TsfEffect(BaseEffect, TsfFileEffect):
         if(self.onlyselected()):
             for k in self.selected:
                 ink_args.append('--select=%s' % k)
-            ink_args.append("--verb=EditInvert")
-            ink_args.append("--verb=EditDelete")
-            ink_args.append("--verb=FitCanvasToDrawing")
-
+                ink_args.append("--verb=EditInvert")
+                ink_args.append("--verb=EditDelete")
+                ink_args.append("--verb=FitCanvasToDrawing")
 
         # unlink clones
         for node in self.document.getroot().iterdescendants("{http://www.w3.org/2000/svg}use"):
@@ -140,7 +135,7 @@ class TsfEffect(BaseEffect, TsfFileEffect):
 
         with self.inkscaped(ink_args, needX=True) as tmp:
             # get document size to test if path are in visble zone
-            print_("get document size to test if path are in visble zone")
+            print_("get document size to test if path are in visble zonei %s" % tmp)
             doc_width, doc_height = self.unittouu(self.document.getroot().get('width')), self.unittouu(self.document.getroot().get('height'))
             output_file = None
 
@@ -149,13 +144,13 @@ class TsfEffect(BaseEffect, TsfFileEffect):
             if self.options.spoolpath:
                 jobanme, filepath = self.job_filepath()
                 output_file = open(filepath, "w")
-                self.initialize_tsf(self.options, doc_width, doc_height, jobname = jobanme, output=output_file)
+                self.initialize_tsf(self.options, doc_width, doc_height, jobname=jobanme, output=output_file)
             else:
                 self.initialize_tsf(self.options, doc_width, doc_height)
 
             self.write_tsf_header()
 
-            #get paths to cut from file, store them by color
+            # get paths to cut from file, store them by color
             print_("get paths to cut from file, store them by color")
             paths_by_color = {}
             for path in self.document.getroot().iterdescendants("{http://www.w3.org/2000/svg}path"):
@@ -167,7 +162,6 @@ class TsfEffect(BaseEffect, TsfFileEffect):
                         path_style['stroke-opacity'] = '0'
                         path.set('style', simplestyle.formatStyle(path_style))
                         paths_by_color.setdefault(path_color, []).append(path)
-
 
             with tmp_file(".bmp", text=False) as tmp_bmp:
                 # generate png then bmp for engraving
@@ -187,33 +181,21 @@ class TsfEffect(BaseEffect, TsfFileEffect):
 
                 end_time = time.time()
 
-                #Display preview
-                if True or self.options.preview == 'true':
-                    preview = self.generate_preview()
-                    try:
-                        if(spawn.find_executable("java")):
-                            execute_command(["java", "-jar", "fablab_tsf_previewer.jar", preview])
-                        elif(spawn.find_executable("eog")):
-                            execute_command(["eog", preview])
-                        elif(spawn.find_executable("gwenview")):
-                            execute_command(["gwenview", preview])
-                        elif(spawn.find_executable("ristretto")):
-                            execute_command(["ristretto", preview])
-                        elif(spawn.find_executable("gpicview")):
-                            execute_command(["gpicview", preview])
-                        elif(spawn.find_executable("rundll32.exe")):
-                            execute_command(["rundll32.exe", "%SystemRoot%\System32\shimgvw.dll,", "ImageView_Fullscreen", preview], shell=True)
-                        elif(spawn.find_executable("open")):
-                            execute_command(["open", "-a", "Preview", preview])
-                        else:
-                            inkex.errormsg(u"Impossible d'afficher la prévisualisation sur votre systeme")
-                    except Exception as e:
-                        inkex.errormsg(u"Impossible d'afficher la prévisualisation sur votre systeme ! %s"% e)
-                    try:
-                        pass
-                        #os.remove(preview)
-                    except OSError:
-                        pass
+            if output_file:
+                try:
+                    output_file.close()
+                except OSError:
+                    pass
+            else:
+                inkex.errormsg(u"\n Cliquer sur valider pour terminer l'enregistrement du fichier.")
+
+            # Display preview
+            if self.options.preview == 'true':
+                print_("filepath : %s" % filepath)
+                if(filepath):
+                    TsfFilePreviewer(filepath).show_preview()
+                else:
+                    pass
 
             # report
             print_("End of generation printing report")
@@ -223,16 +205,8 @@ class TsfEffect(BaseEffect, TsfFileEffect):
                     inkex.errormsg(u" - Gravure : %s" % self.header.get('ProcessMode'))
                 else:
                     inkex.errormsg(u" - Gravure : Aucune")
-                inkex.errormsg(u" - Nombre de couleurs : %s" % len(paths_by_color.keys()))
-                inkex.errormsg(u" - Export effectué en %ss" % round(end_time - start_time, 1))
-
-                if output_file:
-                    try:
-                        output_file.close()
-                    except OSError:
-                        pass
-                else:
-                    inkex.errormsg(u"\n Cliquer sur valider pour terminer l'enregistrement du fichier.")
+                    inkex.errormsg(u" - Nombre de couleurs : %s" % len(paths_by_color.keys()))
+                    inkex.errormsg(u" - Export effectué en %ss" % round(end_time - start_time, 1))
 
 
 if __name__ == '__main__':

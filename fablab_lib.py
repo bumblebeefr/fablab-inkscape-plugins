@@ -1,6 +1,5 @@
 # encoding: utf-8
 from contextlib import contextmanager
-from collections import namedtuple
 import os
 import tempfile
 import subprocess
@@ -12,10 +11,9 @@ import simpletransform
 import bezmisc
 import cspsubdiv
 import inkex
-import platform
 
 DEBUG = False
-#DEBUG = True
+# DEBUG = True
 
 
 def execute_command(*popenargs, **kwargs):
@@ -47,13 +45,13 @@ def execute_command(*popenargs, **kwargs):
         cmd = kwargs.get("args")
         if cmd is None:
             cmd = popenargs[0]
-        raise RuntimeError("Exit code %s on execting command %s \n\n %s" % (retcode, cmd, output))
+        raise RuntimeError("Exit code %s on executing command %s \n\n %s" % (retcode, cmd, output))
     return output
 
 
 def execute_async_command(args):
     os.execlp(*args)
-    #return subprocess.Popen( *popenargs, **kwargs).pid
+    # return subprocess.Popen( *popenargs, **kwargs).pid
 
 
 def inkscape_command(*args):

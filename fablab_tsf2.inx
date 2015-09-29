@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <inkscape-extension xmlns="http://www.inkscape.org/namespace/inkscape/extension">
-	<_name>Exporter en fichier Trotec Spool File (TSF)</_name>
+	<_name>Exporter pour decoupeuse laser Trotec (fichier TSF)</_name>
 	<id>cc.bumblebee.fablab.tsf2</id>
 	<dependency type="extension">org.inkscape.output.svg.inkscape</dependency>
 	<dependency type="executable" location="extensions">fablab_tsf.py</dependency>
@@ -8,14 +8,14 @@
 	<_param name="ext_help" type="description" xml:space="preserve">
 Enregistrement du document au Format TSF (Trotec Spool File) pour decoupeuses laser.
 
-⚠ Version Beta, contient surement encore des bugs
+/!\ Version Beta, contient surement encore des bugs
   </_param>
 	<param name="tabs" type="notebook">
 		<page name="job" _gui-text="Job">
 			<param name="jobname" type="string" _gui-text="Nom du Job : ">Job</param>
 			<param name="jobnumber" type="int" _gui-text="Position du Job : ">1</param>
-  			<param name="onlyselection" type="boolean" _gui-text="Exporter uniquement la selection">false</param>
-  			<param name="optimize" type="boolean" _gui-text="Optimiser l'ordre des découpes">false</param>
+  			<param name="onlyselection" type="boolean" _gui-text="Exporter uniquement la selection (experimental)">false</param>
+  			<param name="optimize" type="boolean" _gui-text="Optimiser l'ordre des découpes (experimental)">false</param>
 			<param name="resolution" type="optiongroup" appearance="minimal" _gui-text="Résolution : ">
 				<_option value="125">125dpi</_option>
 				<_option value="250">250dpi</_option>
@@ -60,7 +60,7 @@ Cela peut être le répertoire de spool de votre découpeuse laser, ou bien nimp
 		</page>
 	</param>
 	<_param name="ext_help2" type="description" xml:space="preserve">
-  &#9203; Soyez patient la génération du fichier tsf peut prendre quelques secondes !
+Soyez patient la génération du fichier tsf peut prendre quelques secondes !
   </_param>
 
 	<effect  needs-live-preview="false">

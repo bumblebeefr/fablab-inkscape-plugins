@@ -8,7 +8,7 @@
 	<_param name="ext_help" type="description" xml:space="preserve">
 Enregistrement du document au Format TSF (Trotec Spool File) pour decoupeuses laser.
 
-⚠ Version Beta, contient surement encore des bugs
+/!\ Version Beta, contient surement encore des bugs
   </_param>
 	<param name="tabs" type="notebook">
 		<page name="job" _gui-text="Job">
@@ -48,7 +48,7 @@ Enregistrement du document au Format TSF (Trotec Spool File) pour decoupeuses la
 		</page>
 	</param>
 	<_param name="ext_help2" type="description" xml:space="preserve">
-  &#9203; Soyez patient·e·s, la génération du fichier tsf peut prendre quelques secondes !
+  Soyez patient·e·s, la génération du fichier tsf peut prendre quelques secondes !
   </_param>
 
 	<output>
