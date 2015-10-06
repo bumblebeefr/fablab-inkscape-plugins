@@ -65,7 +65,8 @@ class TsfEffect(BaseEffect, TsfFileEffect):
                 else:
                     # convert_command(tmp_png, '-flip', '-separate', '-average', '-colorspace', 'Gray', '-ordered-dither', 'h8x8a,256', '-depth', '8', '-alpha', 'off', '-compress', 'NONE', '-colors', '256', 'BMP3:%s' % tmp_bmp)
                     # convert_command(tmp_png, '-flip', '-separate', '-average', '-colorspace', 'Gray', '-ordered-dither', 'h4x4a', '-monochrome', '-depth', '1', '-alpha', 'off', '-compress', 'NONE', '-colors', '2', 'BMP3:%s' % tmp_bmp)
-                    convert_command(tmp_png, '-flip', '-level', '0%,100%,4.0', '-separate', '-average', '-colorspace', 'Gray', '-ordered-dither', 'o8x8', '-remap', os.path.join(os.getcwd(), 'fablab_monochrome.bmp'), '-compress', 'NONE', 'BMP3:%s' % tmp_bmp)
+                    convert_command(tmp_png, '-flip', '-level', '0%,100%,4.0', '-separate', '-average', '-colorspace', 'Gray', '-ordered-dither', 'o8x8', '-remap',
+                                    os.path.join(os.getcwd(), 'fablab_monochrome.bmp'), '-compress', 'NONE', 'BMP3:%s' % tmp_bmp)
 
     def onlyselected(self):
         return self.selected and self.options.onlyselection == 'true'
@@ -78,6 +79,7 @@ class TsfEffect(BaseEffect, TsfFileEffect):
             cnt += 1
             jobname = "%s_%s" % (self.options.jobname, cnt)
             filepath = os.path.join(self.options.spoolpath, "%s_%s.tsf" % (self.options.jobname, cnt))
+
         return jobname, filepath
 
     def paths_to_unit_segments(self, path_nodes):
@@ -102,13 +104,18 @@ class TsfEffect(BaseEffect, TsfFileEffect):
                 inkex.errormsg(u"Le chemin spécifié (%s) pour le répértoire de spool où seront exportés les fichier tsf est incorrect." % self.options.spoolpath)
                 return
 
+        # unlock all object to be able do to what we want on it
+        ink_args.append("--verb=LayerUnlockAll")
+        ink_args.append("--verb=UnlockAllInAllLayers")
+
         # remove all objects not in selection
         if(self.onlyselected()):
             for k in self.selected:
                 ink_args.append('--select=%s' % k)
-                ink_args.append("--verb=EditInvert")
-                ink_args.append("--verb=EditDelete")
-                ink_args.append("--verb=FitCanvasToDrawing")
+
+            ink_args.append("--verb=EditInvertInAllLayers")
+            ink_args.append("--verb=EditDelete")
+            ink_args.append("--verb=FitCanvasToDrawing")
 
         # unlink clones
         for node in self.document.getroot().iterdescendants("{http://www.w3.org/2000/svg}use"):
@@ -135,7 +142,7 @@ class TsfEffect(BaseEffect, TsfFileEffect):
 
         with self.inkscaped(ink_args, needX=True) as tmp:
             # get document size to test if path are in visble zone
-            print_("get document size to test if path are in visble zonei %s" % tmp)
+            print_("get document size to test if path are in visble zone %s" % tmp)
             doc_width, doc_height = self.unittouu(self.document.getroot().get('width')), self.unittouu(self.document.getroot().get('height'))
             output_file = None
 
@@ -205,8 +212,9 @@ class TsfEffect(BaseEffect, TsfFileEffect):
                     inkex.errormsg(u" - Gravure : %s" % self.header.get('ProcessMode'))
                 else:
                     inkex.errormsg(u" - Gravure : Aucune")
-                    inkex.errormsg(u" - Nombre de couleurs : %s" % len(paths_by_color.keys()))
-                    inkex.errormsg(u" - Export effectué en %ss" % round(end_time - start_time, 1))
+
+                inkex.errormsg(u" - Nombre de couleurs : %s" % len(paths_by_color.keys()))
+                inkex.errormsg(u" - Export effectué en %ss" % round(end_time - start_time, 1))
 
 
 if __name__ == '__main__':
