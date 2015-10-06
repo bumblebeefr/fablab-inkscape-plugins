@@ -7,14 +7,12 @@
 	<dependency type="executable" location="extensions">inkex.py</dependency>
 	<_param name="ext_help" type="description" xml:space="preserve">
 Enregistrement du document au Format TSF (Trotec Spool File) pour decoupeuses laser.
-
-/!\ Version Beta, contient surement encore des bugs
   </_param>
 	<param name="tabs" type="notebook">
 		<page name="job" _gui-text="Job">
 			<param name="jobname" type="string" _gui-text="Nom du Job : ">Job</param>
 			<param name="jobnumber" type="int" _gui-text="Position du Job : ">1</param>
-  			<param name="onlyselection" type="boolean" _gui-text="Exporter uniquement la selection (experimental)">false</param>
+  			<param name="onlyselection" type="boolean" _gui-text="Exporter uniquement la selection">false</param>
   			<param name="optimize" type="boolean" _gui-text="Optimiser l'ordre des découpes (experimental)">false</param>
 			<param name="resolution" type="optiongroup" appearance="minimal" _gui-text="Résolution : ">
 				<_option value="125">125dpi</_option>
