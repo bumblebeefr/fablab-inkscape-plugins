@@ -9,9 +9,6 @@ sys.path.append('/usr/share/inkscape/extensions')
 import inkex
 import simplepath
 import simpletransform
-import simplestyle
-
-from pathmodifier import PathModifier
 
 
 def print_(*arg):
@@ -112,7 +109,7 @@ class Polyline:
     @classmethod
     def generate_from_segment_array(cls, arr):
         ''' Generate (yield) polylines(array of consecutive segments) from the specified segment array.
-            Before running, segments in the array must not be flaged 'used'. The order of each polyline 
+            Before running, segments in the array must not be flaged 'used'. The order of each polyline
             may not minimise the distance beetween each of them, but with this methos polylines shout
             not be cut.
         '''
@@ -252,7 +249,7 @@ class Segment:
         return h
 
     def reverse(self):
-        if self.command == 'L':
+        if self.command in ['L','Q']:
             self.end, self.start = self.start, self.end
         elif self.command == 'C':
             self.end, self.start = self.start, self.end
@@ -293,21 +290,17 @@ class Segment:
 
         for cmd, params in simplepath.parsePath(path.get('d')):
             print_('cmd, params', cmd, params)
-            if(cmd == 'M'):
+            if cmd == 'M':
                 if(path_start is None):
                     path_start = params
                 currentPoint = params
 
-            elif(cmd == 'L'):
+            elif cmd == 'L':
                 yield Segment(currentPoint, params)
                 currentPoint = params
 
-            elif (cmd == 'C'):
-                yield Segment(currentPoint, params[-2:], command='C', extra_parameters=params[:-2])
-                currentPoint = params[-2:]
-
-            elif (cmd == 'A'):
-                yield Segment(currentPoint, params[-2:], command='A', extra_parameters=params[:-2])
+            elif cmd in ['A', 'Q', 'C']:
+                yield Segment(currentPoint, params[-2:], command=cmd, extra_parameters=params[:-2])
                 currentPoint = params[-2:]
 
             elif (cmd == 'Z'):
