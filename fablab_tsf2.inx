@@ -1,19 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <inkscape-extension xmlns="http://www.inkscape.org/namespace/inkscape/extension">
-	<_name>Exporter pour decoupeuse laser Trotec (fichier TSF)</_name>
+	<_name>Découpeuse laser Trotec (fichier .tsf)</_name>
 	<id>cc.bumblebee.fablab.tsf2</id>
 	<dependency type="extension">org.inkscape.output.svg.inkscape</dependency>
 	<dependency type="executable" location="extensions">fablab_tsf.py</dependency>
 	<dependency type="executable" location="extensions">inkex.py</dependency>
 	<_param name="ext_help" type="description" xml:space="preserve">
-Enregistrement du document au Format TSF (Trotec Spool File) pour decoupeuses laser.
+Exporter le document au Format .tsf (Trotec Spool File) pour découpeuses laser.
+
   </_param>
 	<param name="tabs" type="notebook">
 		<page name="job" _gui-text="Job">
-			<param name="jobname" type="string" _gui-text="Nom du Job : ">Job</param>
-			<param name="jobnumber" type="int" _gui-text="Position du Job : ">1</param>
-  			<param name="onlyselection" type="boolean" _gui-text="Exporter uniquement la selection">false</param>
-  			<param name="optimize" type="boolean" _gui-text="Optimiser l'ordre des découpes (experimental)">false</param>
+			<param name="jobname" type="string" _gui-text="Nom du Job : ">Nom :</param>
+			<param name="jobnumber" type="int" _gui-text="Position du Job : " gui-hidden="true">1</param>
+			<param name="name" type="description"  xml:space="preserve">&#160;</param>
+
+  		<param name="onlyselection" type="boolean" _gui-text="Exporter uniquement la selection">false</param>
+  		<param name="optimize" type="boolean" _gui-text="Optimiser l'ordre des découpes (experimental)">false</param>
+			<param name="name" type="description"  xml:space="preserve">&#160;</param>
+
 			<param name="resolution" type="optiongroup" appearance="minimal" _gui-text="Résolution : ">
 				<_option value="125">125dpi</_option>
 				<_option value="250">250dpi</_option>
@@ -22,43 +27,48 @@ Enregistrement du document au Format TSF (Trotec Spool File) pour decoupeuses la
 				<_option value="600">600dpi</_option>
 <!-- 				<_option value="1000">1000dpi</_option> -->
 			</param>
-			<param name="cutline" type="optiongroup" appearance="minimal" _gui-text="Contour de decoupe additionel : ">
+			<param name="cutline" type="optiongroup" appearance="minimal" _gui-text="Contour de decoupe additionel : " gui-hidden="true">
 				<_option value="none">Aucun</_option>
 				<_option value="circular">Circulaire</_option>
 				<_option value="rectangular">Rectangulaire</_option>
 				<_option value="optimized">Automatique</_option>
 			</param>
-			<param name="processmode" type="optiongroup" appearance="minimal" _gui-text="Type de gravure : ">
-				<_option value="None">Aucune</_option>
+			<param name="processmode" type="optiongroup"  appearance="minimal" _gui-text="Gravure : ">
+				<_option value="None">Aucune gravure</_option>
 				<_option value="Standard">Gravure standard</_option>
 				<_option value="Relief">Gravure en relief</_option>
 				<_option value="Layer">Gravure multicouches</_option>
 				<_option value="Stamp">Gravure de tampon</_option>
 			</param>
-  			<param name="report" type="boolean" _gui-text="Afficher un petit compte rendu apres génération">false</param>
-  			<param name="preview" type="boolean" _gui-text="Afficher une previualisation de la tache de découpe">false</param>
+			<param name="name" type="description"  xml:space="preserve">&#160;</param>
+
+			<param name="report" type="boolean" _gui-text="Afficher un petit compte rendu apres génération">false</param>
+			<param name="preview" type="boolean" _gui-text="Afficher une previualisation de la tache de découpe">false</param>
 		</page>
-		<page name="options" _gui-text="Paramètres de gravure avancés">
-			<param name="layernumber" type="int" _gui-text="Gravure multicouches - Nombre de couches : " min="1">1</param>
-			<param name="layeradjustement" type="float" _gui-text="Gravure multicouches - Ajustement des couches : " min="0">0.0</param>
-			<param name="stampshoulder" type="optiongroup" appearance="minimal" _gui-text="Gravure de tampon - Talus : ">
-				<_option value="flat">plat</_option>
-				<_option value="medium">moyen</_option>
-				<_option value="steep">raide</_option>
+		<page name="options" _gui-text="Paramètres de gravure">
+			<param name="name" type="description" appearance="header">Gravure multicouches</param>
+			<param name="layernumber" type="int" _gui-text=" - Nombre de couches : " min="1">1</param>
+			<param name="layeradjustement" type="float" _gui-text=" - Ajustement des couches : " min="0">0.0</param>
+			<param name="name" type="description" appearance="header"  xml:space="preserve">
+Gravure tampon</param>
+			<param name="stampshoulder" type="optiongroup" _gui-text=" - Type de talus (stampshoulder) : ">
+				<_option value="flat">plat (flat)</_option>
+				<_option value="medium">moyen (medium)</_option>
+				<_option value="steep">raide (steep)</_option>
 			</param>
 		</page>
 		<page name="options" _gui-text="Spooler">
 			<_param name="ext_help" type="description" xml:space="preserve">Chemin du répertoire où seront sauvegardés les fichiers .tsf.
-			 
-Ce répertoire doit exister. 
 
-Cela peut être le répertoire de spool de votre découpeuse laser, ou bien nimporte quel répertoire de votre ordinateur dans lequel vous souhaitez stocker vos fichiers .tsf.
+Ce répertoire doit exister.
+
+Cela peut être le répertoire de spool de votre découpeuse laser, ou bien n'importe quel répertoire de votre ordinateur dans lequel vous souhaitez stocker vos fichiers .tsf.
   </_param>
 			<param name="spoolpath" type="string" gui-text=" "></param>
 		</page>
 	</param>
 	<_param name="ext_help2" type="description" xml:space="preserve">
-Soyez patient la génération du fichier tsf peut prendre quelques secondes !
+  Soyez patient·e·s, la génération du fichier tsf peut prendre quelques secondes !
   </_param>
 
 	<effect  needs-live-preview="false">

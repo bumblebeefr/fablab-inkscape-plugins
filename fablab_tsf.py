@@ -148,6 +148,7 @@ class TsfEffect(BaseEffect, TsfFileEffect):
 
             # start generating tsf
             print_("start generating tsf")
+            filepath = None
             if self.options.spoolpath:
                 jobanme, filepath = self.job_filepath()
                 output_file = open(filepath, "w")
@@ -198,8 +199,8 @@ class TsfEffect(BaseEffect, TsfFileEffect):
 
             # Display preview
             if self.options.preview == 'true':
-                print_("filepath : %s" % filepath)
                 if(filepath):
+                    print_("filepath : %s" % filepath)
                     TsfFilePreviewer(filepath).show_preview()
                 else:
                     pass
