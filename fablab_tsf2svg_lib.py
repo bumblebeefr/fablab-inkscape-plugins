@@ -190,7 +190,7 @@ def extract_preview(tsf_file, headers, svg_path):
 def extract_svg(tsf_file, headers, engrave_img=None):
     with open(tsf_file, "r") as f:
         tsf_buff = f.read()
-        svg = ['<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="%s" height="%s" viewBox="0 0 %s %s" >' % (headers.get("px_width"), headers.get("px_height"), headers.get("px_width"), headers.get("px_height"))]
+        svg = ['<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 %s %s" >' % (headers.get("px_width"), headers.get("px_height"))]
         if(engrave_img):
             # with open(jpg_path, "rb") as img:
                 # svg.append('<image x="0" y="0" width="%s" height="%s" xlink:href="data:image/jpg;base64,%s" />' % (headers.get("px_width"), headers.get("px_height"), img.read().encode("base64").replace('\n', '')))
