@@ -165,11 +165,14 @@ class TsfEffect(BaseEffect, TsfFileEffect):
                 path_style = simplestyle.parseStyle(path.get('style', ''))
                 path_color = path_style.get('stroke', None)
                 if path_color in TROTEC_COLORS:
-                    xmin, xmax, ymin, ymax = simpletransform.computeBBox([path])
-                    if self.onlyselected() or all([xmin >= 0, ymin >= 0, xmax <= doc_width, ymax <= doc_height]):
-                        path_style['stroke-opacity'] = '0'
-                        path.set('style', simplestyle.formatStyle(path_style))
-                        paths_by_color.setdefault(path_color, []).append(path)
+                    try:
+                        xmin, xmax, ymin, ymax = simpletransform.computeBBox([path])
+                        if self.onlyselected() or all([xmin >= 0, ymin >= 0, xmax <= doc_width, ymax <= doc_height]):
+                            path_style['stroke-opacity'] = '0'
+                            path.set('style', simplestyle.formatStyle(path_style))
+                            paths_by_color.setdefault(path_color, []).append(path)
+                    except TypeError:
+                        pass
 
             with tmp_file(".bmp", text=False) as tmp_bmp:
                 # generate png then bmp for engraving
@@ -201,7 +204,11 @@ class TsfEffect(BaseEffect, TsfFileEffect):
             if self.options.preview == 'true':
                 if(filepath):
                     print_("filepath : %s" % filepath)
-                    TsfFilePreviewer(filepath).show_preview()
+                    try:
+                        TsfFilePreviewer(filepath).show_preview()
+                    except Exception as e:
+                        print_("Error on preview : %s" % e)
+                        pass
                 else:
                     pass
 
