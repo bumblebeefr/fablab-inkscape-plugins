@@ -17,7 +17,7 @@ def print_(*arg):
 
 if __name__ == '__main__':
 
-    with open(sys.argv[2]) as f:
+    with open(sys.argv[-1]) as f:
         endcomments = False
         for line in f:
             if(line.startswith("%%EndComments")):

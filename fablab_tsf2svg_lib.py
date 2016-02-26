@@ -10,6 +10,8 @@ from datetime import datetime
 import errno
 import webbrowser
 from string import Template
+import math
+import sys
 
 headers_re = {
     'ProcessMode': re.compile('<ProcessMode: (.*)>'),
@@ -35,7 +37,11 @@ headers_transfo = {
     'StampShoulder': lambda x: x[0],
     'Cutline': lambda x: x[0],
 }
-
+StampShoulders = {
+    "flat": "Bord plat",
+    "medium": "Bord moyen",
+    "steep": "Bord raide",
+}
 
 bmp_re = re.compile('<STBmp: (.*)>BM(.*)<EOBmp>', re.S)
 polygones_re = re.compile('<DrawPolygon: ([0-9;]*)>')
@@ -66,6 +72,11 @@ HTML_TEMPLATE = Template('''
 body{
     overflow:hidden;
     background-color:#CCC;
+    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+    font-size:10pt;
+}
+table{
+    font-size:9pt;
 }
 #preview{
 display: inline;
@@ -86,11 +97,50 @@ overflow:visible!important;
     left:10px;
     opacity:0;
 }
+#summary{
+    position:absolute;
+    top:10px;
+    left:10px;
+    width:350px;
+    border:dotted 1px #444;
+    background-color:rgba(255,255,255,130);
+    opacity:0.6;
+    padding:10px;
+}
+#summary>div{
+    font-size:1.3em;
+    font-weight:bold;
+    text-align:center;
+}
+#summary:hover{
+    opacity:1;
+}
+li{
+    margin-bottom: 3px
+}
+em{
+    font-size:8.5pt;
+    font-weight:normal;
+}
 </style>
 </head>
 <body>
 <div style="width:1024px; height:768px;" id="container">
     $svg
+</div>
+<div id="summary">
+    <div>Fichier pr&ecirc;t pour la d&eacute;coupe</div>
+    $export_time
+    <br>
+        <ul>
+        <li><strong>Nom du job : </strong> $jobname </li>
+        <li><strong>Mat&eacute;riau : </strong> $material_group &raquo; $material_name </li>
+        <li><strong>Dimensions : </strong> $size </li>
+        <li><strong>R&eacute;solution : </strong> $resolution </li>
+        $colors
+        <li><strong>Gravure : </strong> $engraving </li>
+        <li><strong>Poid : </strong> $file_size </li>
+    </ul>
 </div>
 <script>
 // svg-pan-zoom v3.2.6
@@ -265,20 +315,53 @@ def extract_preview(tsf_file, headers, svg_path):
         svg_file.write(extract_svg(tsf_file, headers, engrave_img))
 
 
-def extract_preview_as_html(tsf_file, headers, html_path):
+def extract_preview_as_html(tsf_file, headers, html_path, export_time=None):
     engrave_img = None
     try:
         with open(tsf_file, "r") as f:
             tsf_buff = f.read()
             engrave_img = get_base64_img(tsf_buff)
-
     except Exception:
         logging.exception("Error extracting preview for %s" % tsf_file)
 
+    file_size = path.getsize(tsf_file)
+
     with open(html_path, "w+") as html_path_file:
+        engraving = "Aucune gravure"
+        if(headers.get('bmp')):
+            if headers.get('ProcessMode') == "Standard":
+                engraving = "Standard"
+            elif headers.get('ProcessMode') == "Relief":
+                engraving = "Relief"
+            elif headers.get('ProcessMode') == "Layer":
+                engraving = "%s Couches <em>(ajustement : %s)</em>" % (headers.get('LayerParameter',{}).get('layers'), headers.get('LayerParameter', {}).get('adjustment'))
+            elif headers.get('ProcessMode') == "Stamp":
+                engraving = "Tampon <em>(%s)</em>" % StampShoulders.get(headers.get('StampShoulder'))
+
+        colors = headers.get('cut', [])
+        cut_str = [" %s couleur" % len(colors)]
+        if len(colors) > 1:
+            cut_str.append("s")
+
+        if len(colors) > 0:
+            cut_str.append(" : ")
+            for c in colors:
+                cut_str.append("<span style='color:%s;'>&#9608;</span> " % c)
+
+
         html_path_file.write(HTML_TEMPLATE.safe_substitute({
             'svg': extract_svg(tsf_file, headers, engrave_img),
-            'jobname': headers.get("JobName")
+            'jobname': headers.get("JobName"),
+            'size': "%sx%s mm" % (int(math.ceil(headers.get('Size').get('width'))), int(math.ceil(headers.get('Size').get('height')))),
+            'colors': '<li><strong>D&eacute;coupe : </strong> %s </li>' % "".join(cut_str),
+            'export_time': '<div style="align:center;"><em>Export effectu&eacute; en %ss</em></div>' % export_time if export_time is not None else '',
+            'engraving': engraving,
+            'headers': "%s" % headers,
+            'resolution': "%sDPI" % headers.get('Resolution'),
+            'material_group': headers.get('MaterialGroup'),
+            'material_name': headers.get('MaterialName'),
+            'resolution': "%sDPI" % headers.get('Resolution'),
+            'file_size': str_weight(file_size)
         }))
 
 
@@ -323,11 +406,13 @@ def str_weight(weight):
 
 class TsfFilePreviewer:
 
-    def __init__(self, full_path):
+    def __init__(self, full_path,  export_time=None):
         if not path.isfile(full_path):
             raise Exception("%s is not a file" % full_path)
 
         self.full_path = full_path
+        self.export_time = export_time
+
         self.directory, self.filename = path.split(self.full_path)
         self.name = self.filename.replace(".tsf", "")
         self._checksum = None
@@ -366,7 +451,7 @@ class TsfFilePreviewer:
         return preview_svg
 
     def generate_html_preview(self, preview_svg):
-        extract_preview_as_html(self.full_path, self.headers(), preview_svg)
+        extract_preview_as_html(self.full_path, self.headers(), preview_svg, export_time=self.export_time)
         return preview_svg
 
     def show_preview(self):
@@ -381,3 +466,7 @@ class TsfFilePreviewer:
             except:
                 webbrowser.open(_preview, new=1)
 #        os.remove(_preview)
+
+
+if __name__ == "__main__":
+    TsfFilePreviewer(sys.argv[1]).show_preview()

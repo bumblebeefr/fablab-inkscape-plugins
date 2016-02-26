@@ -42,7 +42,7 @@ Exporter le document au Format .tsf (Trotec Spool File) pour découpeuses laser.
 			</param>
 			<param name="name" type="description"  xml:space="preserve">&#160;</param>
 
-			<param name="report" type="boolean" _gui-text="Afficher un petit compte rendu apres génération">false</param>
+			<!-- <param name="report" type="boolean" _gui-text="Afficher un petit compte rendu apres génération">false</param> -->
 			<param name="preview" type="boolean" _gui-text="Afficher une previualisation de la tache de découpe">false</param>
 		</page>
 		<page name="options" _gui-text="Paramètres de gravure">

@@ -205,25 +205,14 @@ class TsfEffect(BaseEffect, TsfFileEffect):
                 if(filepath):
                     print_("filepath : %s" % filepath)
                     try:
-                        TsfFilePreviewer(filepath).show_preview()
+                        TsfFilePreviewer(filepath, export_time=round(end_time - start_time, 1)).show_preview()
                     except Exception as e:
-                        print_("Error on preview : %s" % e)
-                        pass
+                        inkex.errormsg(u"Votre fichier est prêt à être decoupé.")
+                        # raise(e)
                 else:
                     pass
-
-            # report
-            print_("End of generation printing report")
-            if self.options.report == 'true':
-                inkex.errormsg(u" - Dimensions : %s mm" % "x".join([str(round(s, 2)) for s in self.header.get('Size')]))
-                if(self.picture):
-                    inkex.errormsg(u" - Gravure : %s" % self.header.get('ProcessMode'))
-                else:
-                    inkex.errormsg(u" - Gravure : Aucune")
-
-                inkex.errormsg(u" - Nombre de couleurs : %s" % len(paths_by_color.keys()))
-                inkex.errormsg(u" - Export effectué en %ss" % round(end_time - start_time, 1))
-
+            else:
+                inkex.errormsg(u"Votre fichier est prêt à être decoupé.")
 
 if __name__ == '__main__':
     TsfEffect().affect(output=False)
