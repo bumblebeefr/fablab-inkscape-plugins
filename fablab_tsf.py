@@ -151,7 +151,7 @@ class TsfEffect(BaseEffect, TsfFileEffect):
             filepath = None
             if self.options.spoolpath:
                 jobanme, filepath = self.job_filepath()
-                output_file = open(filepath, "w")
+                output_file = open(filepath, "wb")
                 self.initialize_tsf(self.options, doc_width, doc_height, jobname=jobanme, output=output_file)
             else:
                 self.initialize_tsf(self.options, doc_width, doc_height)

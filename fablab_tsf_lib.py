@@ -50,51 +50,51 @@ class TsfFileEffect:
         return self.uutounit(val, 'mm')
 
     def _simple_header_out(self, name, default):
-        self.out.write('<%s: %s>\n' % (name, self.header.get(name, default)))
+        self.out.write('<%s: %s>\r\n' % (name, self.header.get(name, default)))
 
     def write_tsf_header(self):
-        self.out.write('<!-- Version: 9.4.2.1034>\n')
-        self.out.write('<!-- PrintingApplication: inkscape.exe>\n')
+        self.out.write('<!-- Version: 9.4.2.1034>\r\n')
+        self.out.write('<!-- PrintingApplication: inkscape.exe>\r\n')
 
-        self.out.write('<BegGroup: Header>\n')
+        self.out.write('<BegGroup: Header>\r\n')
         if self.header.get('ProcessMode', "default") == 'None':
-            self.out.write('<ProcessMode: Standard>\n')
+            self.out.write('<ProcessMode: Standard>\r\n')
         else:
             self._simple_header_out('ProcessMode', 'Standard')
 
-        self.out.write('<Size: %s;%s>\n' % self.header.get('Size', (0.0, 0.0)))
+        self.out.write('<Size: %s;%s>\r\n' % self.header.get('Size', (0.0, 0.0)))
 
         if self.header.get('ProcessMode') == 'Layer':
-            self.out.write("<LayerParameter: %s;%s>\n" % self.header.get('LayerParameters', (2, 0.0)))
+            self.out.write("<LayerParameter: %s;%s>\r\n" % self.header.get('LayerParameters', (2, 0.0)))
 
         if self.header.get('ProcessMode') == 'Stamp':
-            self.out.write("<StampShoulder: %s>\n" % self.header.get('StampShoulder', 'flat'))
+            self.out.write("<StampShoulder: %s>\r\n" % self.header.get('StampShoulder', 'flat'))
 
-        self.out.write("<MaterialGroup: %s>\n" % self.header.get('MaterialGroup', 'Standard').encode("iso-8859-1"))
-        self.out.write("<MaterialName: %s>\n" % self.header.get('MaterialName', 'Standard').encode("iso-8859-1"))
-        self.out.write("<JobName: %s>\n" % self.header.get('JobName', 'job').encode("iso-8859-1"))
+        self.out.write("<MaterialGroup: %s>\r\n" % self.header.get('MaterialGroup', 'Standard').encode("iso-8859-1"))
+        self.out.write("<MaterialName: %s>\r\n" % self.header.get('MaterialName', 'Standard').encode("iso-8859-1"))
+        self.out.write("<JobName: %s>\r\n" % self.header.get('JobName', 'job').encode("iso-8859-1"))
 
         self._simple_header_out('JobNumber', '2')
         self._simple_header_out('Resolution', '500')
         self._simple_header_out('Cutline', 'none')
-        self.out.write('<EndGroup: Header>\n')
+        self.out.write('<EndGroup: Header>\r\n')
 
     def write_tsf_picture(self, image_path):
         self.picture = True
         if image_path is not None and os.path.isfile(image_path) and os.stat(image_path)[stat.ST_SIZE]:
-            self.out.write('<BegGroup: Bitmap>\n')
+            self.out.write('<BegGroup: Bitmap>\r\n')
             self.out.write('<STBmp: 0;0>')
             with open(image_path, 'rb') as image:
                 self.out.write(image.read())
-            self.out.write('<EOBmp>\n')
-            self.out.write('<EndGroup: Bitmap>\n')
+            self.out.write('<EOBmp>\r\n')
+            self.out.write('<EndGroup: Bitmap>\r\n')
 
     @contextmanager
     def draw_tsf_commands(self):
         if self.draw_tsf_commands:
-            self.out.write('<BegGroup: DrawCommands>\n')
+            self.out.write('<BegGroup: DrawCommands>\r\n')
             yield self._draw_polygon
-            self.out.write('<EndGroup: DrawCommands>\n')
+            self.out.write('<EndGroup: DrawCommands>\r\n')
 
     def _draw_polygon(self, r, g, b, points):
         print_("points", points)
@@ -103,4 +103,4 @@ class TsfFileEffect:
             o = [len(points), r, g, b]
             for point in ([self.toDots(x - self.offset_x), self.toDots(y - self.offset_y)] for x, y in points):
                 o.extend(point)
-            self.out.write('<DrawPolygon: %s>\n' % ";".join((str(i) for i in o)))
+            self.out.write('<DrawPolygon: %s>\r\n' % ";".join((str(i) for i in o)))
