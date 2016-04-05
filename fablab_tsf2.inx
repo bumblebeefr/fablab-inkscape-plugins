@@ -11,11 +11,16 @@ Exporter le document au Format .tsf (Trotec Spool File) pour découpeuses laser.
   </_param>
 	<param name="tabs" type="notebook">
 		<page name="job" _gui-text="Job">
+<_param name="select_help" type="description" xml:space="preserve">
+Si aucun element n'est selectionné le contenu de la page sera exporté, sinon seule la selection sera exportée.
+
+</_param>
 			<param name="jobname" type="string" _gui-text="Nom du Job : ">Nom :</param>
 			<param name="jobnumber" type="int" _gui-text="Position du Job : " gui-hidden="true">1</param>
 			<param name="name" type="description"  xml:space="preserve">&#160;</param>
 
-  		<param name="onlyselection" type="boolean" _gui-text="Exporter uniquement la selection">false</param>
+
+  		<!-- <param name="onlyselection" type="boolean" _gui-text="Exporter uniquement la selection">true</param> -->
   		<param name="optimize" type="boolean" _gui-text="Optimiser l'ordre des découpes (experimental)">false</param>
 			<param name="name" type="description"  xml:space="preserve">&#160;</param>
 

@@ -44,7 +44,7 @@ class TsfEffect(BaseEffect, TsfFileEffect):
         self.OptionParser.add_option('--stampshoulder', action='store', type='choice', choices=['flat', 'medium', 'steep'], default='flat')
         self.OptionParser.add_option('--cutline', action='store', type='choice', choices=['none', 'circular', 'rectangular', 'optimized'], default='none')
         self.OptionParser.add_option('--spoolpath', action='store', type='string', default='')
-        self.OptionParser.add_option('--onlyselection', action="store", type='choice', choices=['true', 'false'], default='false')
+        #self.OptionParser.add_option('--onlyselection', action="store", type='choice', choices=['true', 'false'], default='true')
         self.OptionParser.add_option('--optimize', action="store", type='choice', choices=['true', 'false'], default='false')
         self.OptionParser.add_option('--report', action="store", type='choice', choices=['true', 'false'], default='false')
         self.OptionParser.add_option('--preview', action="store", type='choice', choices=['true', 'false'], default='false')
@@ -69,7 +69,7 @@ class TsfEffect(BaseEffect, TsfFileEffect):
                                     os.path.join(os.getcwd(), 'fablab_monochrome.bmp'), '-compress', 'NONE', 'BMP3:%s' % tmp_bmp)
 
     def onlyselected(self):
-        return self.selected and self.options.onlyselection == 'true'
+        return self.selected #and self.options.onlyselection == 'true'
 
     def job_filepath(self):
         filepath = os.path.join(self.options.spoolpath, "%s.tsf" % (self.options.jobname))
