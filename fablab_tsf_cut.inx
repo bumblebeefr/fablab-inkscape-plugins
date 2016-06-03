@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <inkscape-extension xmlns="http://www.inkscape.org/namespace/inkscape/extension">
-	<_name>Découpeuse laser Trotec  (complet)</_name>
-	<id>cc.bumblebee.fablab.tsf2</id>
+	<_name>Découpe laser Trotec</_name>
+	<id>cc.bumblebee.fablab.tsf.cut</id>
 	<dependency type="extension">org.inkscape.output.svg.inkscape</dependency>
 	<dependency type="executable" location="extensions">fablab_tsf.py</dependency>
 	<dependency type="executable" location="extensions">inkex.py</dependency>
 	<_param name="ext_help" type="description" xml:space="preserve">
-
+Exporter une tache de découpe/marquage laser au Format.tsf (Trotec Spool File).
 
   </_param>
 	<param name="tabs" type="notebook">
@@ -38,29 +38,13 @@ Si aucun element n'est selectionné le contenu de la page sera exporté, sinon s
 				<_option value="rectangular">Rectangulaire</_option>
 				<_option value="optimized">Automatique</_option>
 			</param>
-			<param name="processmode" type="optiongroup"  appearance="minimal" _gui-text="Gravure : ">
+			<param name="processmode" type="optiongroup"  appearance="minimal" _gui-text="Gravure : " gui-hidden="true">
 				<_option value="None">Aucune gravure</_option>
-				<_option value="Standard">Gravure standard</_option>
-				<_option value="Relief">Gravure en relief</_option>
-				<_option value="Layer">Gravure multicouches</_option>
-				<_option value="Stamp">Gravure de tampon</_option>
 			</param>
 			<param name="name" type="description"  xml:space="preserve">&#160;</param>
 
 			<!-- <param name="report" type="boolean" _gui-text="Afficher un petit compte rendu apres génération">false</param> -->
-			<param name="preview" type="boolean" _gui-text="Afficher une previualisation de la tache de découpe">false</param>
-		</page>
-		<page name="options" _gui-text="Paramètres de gravure">
-			<param name="name" type="description" appearance="header">Gravure multicouches</param>
-			<param name="layernumber" type="int" _gui-text=" - Nombre de couches : " min="1">1</param>
-			<param name="layeradjustement" type="float" _gui-text=" - Ajustement des couches : " min="0">0.0</param>
-			<param name="name" type="description" appearance="header"  xml:space="preserve">
-Gravure tampon</param>
-			<param name="stampshoulder" type="optiongroup" _gui-text=" - Type de talus (stampshoulder) : ">
-				<_option value="flat">plat (flat)</_option>
-				<_option value="medium">moyen (medium)</_option>
-				<_option value="steep">raide (steep)</_option>
-			</param>
+			<param name="preview" type="boolean" _gui-text="Afficher une previualisation de la tache de découpe" gui-hidden="true">true</param>
 		</page>
 		<page name="options" _gui-text="Spooler">
 			<_param name="ext_help" type="description" xml:space="preserve">Chemin du répertoire où seront sauvegardés les fichiers .tsf.
@@ -69,7 +53,7 @@ Ce répertoire doit exister.
 
 Cela peut être le répertoire de spool de votre découpeuse laser, ou bien n'importe quel répertoire de votre ordinateur dans lequel vous souhaitez stocker vos fichiers .tsf.
   </_param>
-			<param name="spoolpath" type="string" gui-text=" "></param>
+			<param name="spoolpath" type="string" gui-text=" ">/tmp</param>
 		</page>
 	</param>
 	<_param name="ext_help2" type="description" xml:space="preserve">

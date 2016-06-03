@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<inkscape-extension xmlns="http://www.inkscape.org/namespace/inkscape/extension">
+	<_name>Tour numerique proxxon</_name>
+	<id>cc.bumblebee.fablab.gcodetool.pd400</id>
+
+	<!-- Custom arguments -->
+	<param name="filename" type="string" _gui-text="Nom du fichier :">output.ngc</param>
+	<param name="add-numeric-suffix-to-filename" type="boolean" _gui-text="Ajouter un numéro au fichier :">true</param>
+	<param name="directory" type="string" _gui-text="Repertoire de destination :">/home</param>
+
+	<param name="name" type="description"  xml:space="preserve">&#160;</param>
+
+	<param name="unit" type="enum" _gui-text="Unités :" gui-hidden="true">
+		<_item value="G21 (All units in mm)">mm</_item>
+		<_item value="G20 (All units in inches)">in</_item>
+	</param>
+	<param name="Zsafe" type="float" precision="5" min="-1000" max="1000" _gui-text="Profondeur de dégagement :">5</param>
+
+	<param name="lathe-width" type="float" precision="5" min="0" max="1000" _gui-text="Rayon de pièce à usiner :">10</param>
+	<param name="lathe-fine-cut-width" type="float" precision="5" min="0" max="1000" _gui-text="Epaisseur des passe de finition :">1</param>
+	<param name="lathe-fine-cut-count" type="int" min="0" max="1000" _gui-text="Nombre de passe de finition :">1</param>
+	<param name="lathe-create-fine-cut-using"  _gui-text="Passe de finition créée par :" type="optiongroup" appearance="minimal">
+		<_option value="Move path">Déplacement du chemin</_option>
+		<_option value="Offset path">Offset sur le chemin</_option>
+	</param>
+
+	<!-- hidden arguments gui-hidden="true" -->
+	<param name="active-tab" type="string" _gui-text="Tab:" gui-hidden="true">"lathe"</param>
+	<param name="lathe-x-axis-remap" type="string" _gui-text="Lathe X axis remap:" gui-hidden="true">Z</param>
+	<param name="lathe-z-axis-remap" type="string" _gui-text="Lathe Z axis remap:" gui-hidden="true">X</param>
+
+	<param name="Zscale" type="float" precision="5" min="-100000" max="100000" _gui-text="Scale along Z axis:" gui-hidden="true">1</param>
+	<param name="Zoffset" type="float" precision="5" min="-100000" max="100000" _gui-text="Offset along Z axis:" gui-hidden="true">0.0</param>
+	<param name="auto_select_paths" type="boolean" _gui-text="Select all paths if nothing is selected" gui-hidden="true">true</param>
+	<param name="min-arc-radius" type="float" precision="5" min="-1000" max="1000"  _gui-text="Minimum arc radius:" gui-hidden="true">1000</param>
+	<param name="comment-gcode" type="string" _gui-text="Comment Gcode:" gui-hidden="true"></param>
+	<param name="comment-gcode-from-properties" type="boolean" _gui-text="Get additional comments from object's properties" gui-hidden="true">False</param>
+
+
+	<param name="postprocessor" type="enum" _gui-text="Post-processor:" gui-hidden="true">
+		<_item msgctxt="GCode postprocessor" value=" ">None</_item>
+		<!-- <_item value="parameterize();">Parameterize Gcode</_item>
+		<_item value="flip(y);parameterize();">Flip y axis and parameterize Gcode</_item>
+		<_item value="round(4);">Round all values to 4 digits</_item>
+		<_item value='regex("G01 Z([0-9\.\-]+).*\(Penetrate\)", lambda match: "G00 Z%f (Fast pre-penetrate)\n%s" %(float(match.group(1))+5, match.group(0)));'>Fast pre-penetrate</_item> -->
+	</param>
+	<param name="postprocessor-custom" type="string" _gui-text="Additional post-processor:" gui-hidden="true">scale(2);regex(r"([A-Z]) ([^ ]+)",r"\1\2");</param>
+
+	<param name="create-log" type="boolean" _gui-text="Generate log file" gui-hidden="true">false</param>
+	<param name="log-filename" type="string" _gui-text="Full path to log file:" gui-hidden="true"></param>
+
+	<effect  needs-live-preview="true">
+		<object-type>all</object-type>
+		<effects-menu>
+			<submenu _name="Fablab" />
+		</effects-menu>
+	</effect>
+	<script>
+		<command reldir="extensions" interpreter="python">fablab_proxxon_lathe.py</command>
+	</script>
+</inkscape-extension>

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<inkscape-extension xmlns="http://www.inkscape.org/namespace/inkscape/extension">
+	<_name>Gravure et découpe laser Trotec</_name>
+	<id>cc.bumblebee.fablab.tsf.engrave</id>
+	<dependency type="extension">org.inkscape.output.svg.inkscape</dependency>
+	<dependency type="executable" location="extensions">fablab_tsf.py</dependency>
+	<dependency type="executable" location="extensions">inkex.py</dependency>
+	<_param name="ext_help" type="description" xml:space="preserve">
+Exporter une tache de gravure et découpe laser au Format.tsf (Trotec Spool File).
+
+Ce plugin est dédiée au taches comportant de la gravure, si vous n'avez pas de gravure à effectuer merci d'utiliser le plugin de découpe.</_param>
+	<param name="tabs" type="notebook">
+		<page name="job" _gui-text="Job">
+<_param name="select_help" type="description" xml:space="preserve">
+Si aucun element n'est selectionné le contenu de la page sera exporté, sinon seule la selection sera exportée.
+</_param>
+			<param name="jobname" type="string" _gui-text="Nom du Job : ">Job</param>
+			<param name="jobnumber" type="int" _gui-text="Position du Job : " gui-hidden="true">1</param>
+			<param name="name" type="description"  xml:space="preserve">&#160;</param>
+
+			<param name="resolution" type="optiongroup" appearance="minimal" _gui-text="Résolution : ">
+				<_option value="125">125dpi</_option>
+				<_option value="250">250dpi</_option>
+				<_option value="333">333dpi</_option>
+				<_option value="500">500dpi</_option>
+				<_option value="600">600dpi</_option>
+			</param>
+
+			<param name="name" type="description"  appearance="header">Selectionner le type de gravure : </param>
+			<param name="processmode" type="notebook">
+				<page name="Standard" _gui-text="Standard">
+					<param name="name" type="description"  xml:space="preserve">&#160;</param>
+					<param name="name" type="description">Les niveau de gris seront tramés.</param>
+
+				</page>
+				<page name="Relief" _gui-text="En relief">
+					<param name="name" type="description"  xml:space="preserve">&#160;</param>
+					<param name="name" type="description">Les niveau de gris seront gravés en relief.</param>
+				</page>
+				<page name="Layer" _gui-text="Multicouches">
+					<param name="layernumber" type="int" _gui-text="Nombre de couches : " min="1">1</param>
+					<param name="layeradjustement" type="float" _gui-text="Ajustement des couches : " min="0">0.0</param>
+				</page>
+				<page name="Stamp" _gui-text="Tampon">
+					<param name="stampshoulder" type="optiongroup" _gui-text="Type de talus (stampshoulder) : ">
+						<_option value="flat">plat (flat)</_option>
+						<_option value="medium">moyen (medium)</_option>
+						<_option value="steep">raide (steep)</_option>
+					</param>
+				</page>
+			</param>
+
+			<param name="preview" type="boolean" _gui-text="Afficher une previualisation de la tache de découpe">true</param>
+		</page>
+		<page name="options" _gui-text="Spooler">
+			<_param name="ext_help" type="description" xml:space="preserve">Chemin du répertoire où seront sauvegardés les fichiers .tsf.
+
+Ce répertoire doit exister.
+
+Cela peut être le répertoire de spool de votre découpeuse laser, ou bien n'importe quel répertoire de votre ordinateur dans lequel vous souhaitez stocker vos fichiers .tsf.
+  </_param>
+			<param name="spoolpath" type="string" gui-text=" ">/tmp</param>
+		</page>
+	</param>
+	<_param name="ext_help2" type="description" xml:space="preserve">
+  Soyez patient·e·s, la génération du fichier tsf peut prendre quelques secondes !
+  </_param>
+
+	<effect  needs-live-preview="false">
+		<object-type>all</object-type>
+		<effects-menu>
+			<submenu _name="Fablab" />
+		</effects-menu>
+	</effect>
+	<script>
+		<command reldir="extensions" interpreter="python">fablab_tsf.py</command>
+	</script>
+</inkscape-extension>

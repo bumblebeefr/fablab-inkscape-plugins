@@ -35,7 +35,7 @@ class TsfEffect(BaseEffect, TsfFileEffect):
     def __init__(self):
         BaseEffect.__init__(self)
         self.OptionParser.add_option('--tabs', action='store', type='string', default='Job')
-        self.OptionParser.add_option('--processmode', action='store', type='choice', choices=['None', 'Standard', 'Layer', 'Stamp', 'Relief'], default='None')
+        self.OptionParser.add_option('--processmode', action='store', type='choice', choices=['None', 'Standard', 'Layer', 'Stamp', 'Relief', '"Standard"', '"Layer"', '"Stamp"', '"Relief"'], default='None')
         self.OptionParser.add_option('--jobname', action='store', type='string', default='Job')
         self.OptionParser.add_option('--jobnumber', action='store', type='int', default=1)
         self.OptionParser.add_option('--resolution', action='store', type='int', default=500)
@@ -96,6 +96,8 @@ class TsfEffect(BaseEffect, TsfFileEffect):
                     yield points
 
     def effect(self):
+        self.options.processmode = self.options.processmode.replace('"', '')
+
         start_time = time.time()
         ink_args = []
 
