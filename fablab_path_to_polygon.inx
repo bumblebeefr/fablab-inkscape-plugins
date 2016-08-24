@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<inkscape-extension xmlns="http://www.inkscape.org/namespace/inkscape/extension">
+	<_name>Convertir un chemin en polygone</_name>
+	<id>cc.bumblebee.fablab.path2polygon</id>
+	<dependency type="extension">org.inkscape.output.svg.inkscape</dependency>
+	<dependency type="executable" location="extensions">fablab_path_to_polygon.py</dependency>
+	<dependency type="executable" location="extensions">inkex.py</dependency>
+	
+ 	<param name="precision" type="float" _gui-text="Precision : ">0.2</param>		
+
+	<effect  needs-live-preview="true">
+		<object-type>all</object-type>
+		<effects-menu>
+			<submenu _name="Fablab" />
+		</effects-menu>
+	</effect>
+	<script>
+		<command reldir="extensions" interpreter="python">fablab_path_to_polygon.py</command>
+	</script>
+</inkscape-extension>

@@ -122,7 +122,7 @@ def print_(*arg):
         f.close()
 
 
-def path_to_segments(node):
+def path_to_segments(node, smoothness=0.2):
     '''
         Generator to convert a path node to an interator on
         segmented paths (bezier curves broken to approximated
@@ -142,13 +142,13 @@ def path_to_segments(node):
 
     for sp in p:
         path = []
-        subdivideCubicPath(sp, 0.2)  # TODO: smoothness preference
+        subdivideCubicPath(sp, smoothness) 
         for csp in sp:
             path.append([csp[1][0], csp[1][1]])
         yield path
 
 
-def pathd_to_segments(d):
+def pathd_to_segments(d, smoothness=0.2):
     '''
         Generator to convert a path def to an interator on
         segmented paths (bezier curves broken to approximated
@@ -165,7 +165,7 @@ def pathd_to_segments(d):
 
     for sp in p:
         path = []
-        subdivideCubicPath(sp, 0.2)  # TODO: smoothness preference
+        subdivideCubicPath(sp, smoothness)  
         for csp in sp:
             path.append([csp[1][0], csp[1][1]])
         yield path
