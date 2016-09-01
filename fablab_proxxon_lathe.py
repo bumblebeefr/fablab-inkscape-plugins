@@ -49,9 +49,6 @@ def main():
                 with open(footer_file, 'w') as f:
                     f.write(FOOTER)
 
-            with open("/tmp/inkscape.log", "a") as f:
-                f.write("Directory argument  : %s \n" % directory)
-
         elif(a.startswith("--id=")):
             ids.append(a)
 
