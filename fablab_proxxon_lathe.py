@@ -5,15 +5,7 @@ sys.path.append('/usr/share/inkscape/extensions')
 
 from fablab_path_to_polygon import PathToPolygon
 from lxml import etree
-
-
-def print_(*arg):
-    f = open("fablab_debug.log", "a")
-    for s in arg:
-        s = str(unicode(s).encode('unicode_escape')) + " "
-        f.write(s)
-    f.write("\n")
-    f.close()
+from fablab_lib import print_
 
 
 HEADER = ''';GCode file for proxxon CNC lathe and nncad

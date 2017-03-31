@@ -5,14 +5,7 @@ from math import *
 import getopt
 import shutil
 
-
-def print_(*arg):
-    f = open("fablab_debug.log","a")
-    for s in arg :
-        s = str(unicode(s).encode('unicode_escape'))+" "
-        f.write( s )
-    f.write("\n")
-    f.close()
+from fablab_lib import print_
 
 
 if __name__ == '__main__':

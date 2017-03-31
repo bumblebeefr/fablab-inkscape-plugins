@@ -11,17 +11,8 @@ import inkex
 from simplestyle import *
 import simplepath
 
-from fablab_lib import BaseEffect
+from fablab_lib import BaseEffect, print_
 from fablab_box_lib import BoxEffect
-
-
-def print_(*arg):
-    f = open("fablab_debug.log", "a")
-    for s in arg:
-        s = str(unicode(s).encode('unicode_escape')) + " "
-        f.write(s)
-    f.write("\n")
-    f.close()
 
 
 def unsignedLong(signedLongString):

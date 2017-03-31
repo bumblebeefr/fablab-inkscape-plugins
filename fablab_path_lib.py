@@ -11,13 +11,7 @@ import simplepath
 import simpletransform
 
 
-def print_(*arg):
-    f = open("fablab_debug.log", "a")
-    for s in arg:
-        s = str(unicode(s).encode('unicode_escape')) + " "
-        f.write(s)
-    f.write("\n")
-    f.close()
+from fablab_lib import print_
 
 
 # precision to 1/10 px should be sufficient for designs in mm ?

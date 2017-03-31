@@ -15,7 +15,6 @@ import inkex
 DEBUG = False
 # DEBUG = True
 
-
 def execute_command(*popenargs, **kwargs):
     r"""Run command with arguments and return its output as a byte string.
 
@@ -114,12 +113,15 @@ def print_(*arg):
         Print out debug message on fablab_debug.log in inkscape extension directory.
     '''
     if DEBUG:
-        f = open("fablab_debug.log", "a")
-        for s in arg:
-            s = str(unicode(s).encode('unicode_escape')) + " "
-            f.write(s)
-        f.write("\n")
-        f.close()
+        try:
+            f = open("fablab_debug.log", "a")
+            for s in arg:
+                s = str(unicode(s).encode('unicode_escape')) + " "
+                f.write(s)
+            f.write("\n")
+            f.close()
+        except IOError:
+            pass
 
 
 def path_to_segments(node, smoothness=0.2):
@@ -142,7 +144,7 @@ def path_to_segments(node, smoothness=0.2):
 
     for sp in p:
         path = []
-        subdivideCubicPath(sp, smoothness) 
+        subdivideCubicPath(sp, smoothness)
         for csp in sp:
             path.append([csp[1][0], csp[1][1]])
         yield path
@@ -165,7 +167,7 @@ def pathd_to_segments(d, smoothness=0.2):
 
     for sp in p:
         path = []
-        subdivideCubicPath(sp, smoothness)  
+        subdivideCubicPath(sp, smoothness)
         for csp in sp:
             path.append([csp[1][0], csp[1][1]])
         yield path
