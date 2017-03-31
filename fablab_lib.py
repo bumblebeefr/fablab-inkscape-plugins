@@ -124,7 +124,7 @@ def print_(*arg):
             pass
 
 
-def path_to_segments(node, smoothness=0.2):
+def path_to_segments(node, smoothness=0.1):
     '''
         Generator to convert a path node to an interator on
         segmented paths (bezier curves broken to approximated
