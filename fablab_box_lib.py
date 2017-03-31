@@ -26,6 +26,8 @@ class BoxEffect():
              *  - lastUp : Indique si l'on fin en haut d'un crenau (true) ou en bas du crenau (false - defaut)
         '''
         # Calcultate tab size and number
+
+        tab_width = max(1.5*thickness, tab_width)
         nb_tabs = math.floor(length / tab_width)
         nb_tabs = int(nb_tabs - 1 + (nb_tabs % 2))
         tab_real_width = length / nb_tabs
@@ -33,7 +35,7 @@ class BoxEffect():
         # Check if no inconsistency on tab size and number
         #print("Pour une largeur de %s et des encoches de %s => Nombre d'encoches : %s Largeur d'encoche : %s" % (length, tab_width, nb_tabs, tab_real_width))
         if (tab_real_width <= thickness * 1.5):
-            raise BoxGenrationError("Attention les encoches resultantes (%s mm) ne sont pas assez larges au vue de l'epasseur de votre materiaux. Merci d'utiliser une taille d'encoches coherente avec votre boite" % tab_real_width)
+            raise BoxGenrationError("Attention les encoches resultantes (%.2f mm) ne sont pas assez larges au vue de l'epasseur de votre materiaux. Merci d'augmenter la largeur des encoches." % (tab_real_width, ))
 
     #     if (nb_tabs <= 1):
     #         raise BoxGenrationError("Attention vous n'aurez aucune encoche sur cette longeur, c'est une mauvaise idée !!! Indiquez une taill d'encoche correcte pour votre taille de boite")
