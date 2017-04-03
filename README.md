@@ -41,7 +41,8 @@ C'est une bonne idée de ne pas utiliser cette couleur pour autre chose (modifie
 Télécharger [les sources au format zip](https://github.com/bumblebeefr/fablab-inkscape-plugins/archive/master.zip), en extraire les fichiers commençant par  `fablab_` et les copier dans le répertoire d’extensions d'inkscape :
 * Sous gnu/linux, FreeBSD : `~/.config/inkscape/extentions/` ou `/usr/share/inkscape/extentions/`
 * Sous mac OSX : `/Applications/Inkscape.app/Contents/Resources/extensions/`
-* Sous windows : `C:\Program Files\Inkscape\share\extensions\` ou `%AppData%\inkscape\extensions\`
+* Sous windows : `C:\Program Files\Inkscape\share\extensions\` (ou `C:\Program Files (x86)\Inkscape\share\extensions\`)
+ ou `%AppData%\inkscape\extensions\`
 
 Installer imagemagick (utilisé par le plugin d'export au format TSF pour découpeuses laser) :
 * Sous gnu/linux, FreeBSD : Installer imagemagick avec votre gestionnaire de packets préféré, ou [télécharger le binaire prépackagé](http://www.imagemagick.org/script/binary-releases.php#unix)
