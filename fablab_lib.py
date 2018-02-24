@@ -15,6 +15,10 @@ import inkex
 DEBUG = False
 # DEBUG = True
 
+class ImageMagickError(Exception):
+    def __init__(self, message):
+        self.message = message
+
 def execute_command(*popenargs, **kwargs):
     r"""Run command with arguments and return its output as a byte string.
 
@@ -74,13 +78,23 @@ def inkscapeX_command(*args):
 
 def convert_command(*args):
     print_("Calling im convert with", args)
-
-    return execute_command(subprocess.list2cmdline(['convert'] + [str(arg) for arg in args]), shell=True)
-
+    try :
+        return execute_command(subprocess.list2cmdline(['convert'] + [str(arg) for arg in args]), shell=True)
+    except:
+        try:
+            return execute_command(subprocess.list2cmdline(['magick', 'convert'] + [str(arg) for arg in args]), shell=True)
+        except:
+            raise ImageMagickError("Unable to exec ImageMagick convert")
 
 def identify_command(*args):
     print_("Calling im identify with", args)
-    return execute_command(subprocess.list2cmdline(['identify'] + [str(arg) for arg in args]), shell=True)
+    try :
+        return execute_command(subprocess.list2cmdline(['identify'] + [str(arg) for arg in args]), shell=True)
+    except:
+        try:
+            return execute_command(subprocess.list2cmdline(['identify'] + [str(arg) for arg in args]), shell=True)
+        except:
+            raise ImageMagickError("Unable to exec ImageMagick convert")
 
 
 def hex_color(rgb_tuple):

@@ -177,12 +177,15 @@ class TsfEffect(BaseEffect, TsfFileEffect):
                         pass
 
             with tmp_file(".bmp", text=False) as tmp_bmp:
-                # generate png then bmp for engraving
-                print_("generate png then bmp for engraving")
-                if(self.options.processmode != 'None'):
-                    self.generate_bmp(tmp_bmp)
-                    if(identify_command('-format', '%k', tmp_bmp).strip() != "1"):  # If more than one color in png output
-                        self.write_tsf_picture(tmp_bmp)
+                try:
+                    # generate png then bmp for engraving
+                    print_("generate png then bmp for engraving")
+                    if(self.options.processmode != 'None'):
+                        self.generate_bmp(tmp_bmp)
+                        if(identify_command('-format', '%k', tmp_bmp).strip() != "1"):  # If more than one color in png output
+                            self.write_tsf_picture(tmp_bmp)
+                except ImageMagickError:
+                    inkex.errormsg(u"⚠️ Impossible de générer le fichier de gravure. \n\nImageMagick est il correctement installé ?\n")
 
                 # adding polygones
                 print_("generate png then bmp for engraving")
