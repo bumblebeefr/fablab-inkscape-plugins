@@ -41,14 +41,14 @@ class TsfFileEffect:
         self.picture = False
 
         # header size is in mm this is size converted to pixels
-        self.px_widh = int(round(self.uutounit(w, 'in') * options.resolution))
-        self.px_height = int(round(self.uutounit(h, 'in') * options.resolution))
+        self.px_widh = int(round(self.svg.uutounit(w, 'in') * options.resolution))
+        self.px_height = int(round(self.svg.uutounit(h, 'in') * options.resolution))
 
     def toDots(self, val):
-        return int(round(self.uutounit(val, 'in') * self.header.get('Resolution')))
+        return int(round(self.svg.uutounit(val, 'in') * self.header.get('Resolution')))
 
     def toMm(self, val):
-        return self.uutounit(val, 'mm')
+        return self.svg.uutounit(val, 'mm')
 
     def _simple_header_out(self, name, default):
         self.out.write('<%s: %s>\n' % (name, self.header.get(name, default)))

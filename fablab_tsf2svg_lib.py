@@ -28,9 +28,9 @@ headers_re = {
 headers_transfo = {
     'ProcessMode': lambda x: x[0],
     'Size': lambda x: {'width': float(x[0]), 'height': float(x[1])},
-    'MaterialGroup': lambda x: x[0].decode('iso-8859-1'),
-    'MaterialName': lambda x: x[0].decode('iso-8859-1'),
-    'JobName': lambda x: x[0].decode('iso-8859-1'),
+    'MaterialGroup': lambda x: x[0],
+    'MaterialName': lambda x: x[0],
+    'JobName': lambda x: x[0],
     'JobNumber': lambda x: int(x[0]),
     'Resolution': lambda x: int(x[0]),
     'LayerParameter': lambda x: {'layers': int(x[0]), 'adjustment': float(x[1])},

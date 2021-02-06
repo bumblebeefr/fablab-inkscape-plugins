@@ -16,7 +16,7 @@ class PathToPolygon(BaseEffect):
             '--precision', action='store', type='float', default=0.2)
 
     def effect(self):
-        for _id, node in self.selected.iteritems():
+        for _id, node in self.svg.selected.iteritems():
             if node.tag == inkex.addNS('path', 'svg'):
                 d = ""
                 for points in path_to_segments(node, self.options.precision):

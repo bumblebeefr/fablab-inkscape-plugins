@@ -4,6 +4,7 @@ import os
 import tempfile
 import subprocess
 from distutils import spawn
+import inkex.elements
 
 import cubicsuperpath
 import simplepath
@@ -226,12 +227,6 @@ class BaseEffect(inkex.Effect):
     def __init__(self):
         inkex.Effect.__init__(self)
 
-        if not hasattr(self, 'uutounit'):
-            self.uutounit = inkex.uutounit
-
-        if not hasattr(self, 'unittouu'):
-            self.unittouu = inkex.unittouu
-
     @contextmanager
     def as_tmp_svg(self):
         '''
@@ -254,23 +249,16 @@ class BaseEffect(inkex.Effect):
 
     @contextmanager
     def reloaded_from_file(self, tmp):
-        old_document = self.document
-        self.parse(tmp)
-        self.getposinlayer()
-        self.getselected()
-        self.getdocids()
+        self.load(tmp)
         try:
             yield
         finally:
-            self.document = old_document
-            self.getposinlayer()
-            self.getselected()
-            self.getdocids()
+            self.load_raw()
 
     @contextmanager
     def inkscaped(self, arguments=[], needX=False):
         with self.as_tmp_svg() as tmp:
-            ink_args = ["--file", tmp] + arguments + ["--verb=FileSave", "--verb=FileQuit"]
+            ink_args =  arguments + ["--verb=FileSave", "--verb=FileQuit", tmp]
             if needX:
                 inkscapeX_command(*ink_args)
             else:

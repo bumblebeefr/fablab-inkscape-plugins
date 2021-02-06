@@ -2,9 +2,15 @@
 # encoding: utf-8
 import os
 import simplestyle
+import inkex.paths
 import time
 
-from fablab_lib import *
+from fablab_lib import (
+    ImageMagickError, execute_command, execute_async_command, inkscape_command,
+    inkscapeX_command, convert_command, identify_command, hex_color,
+    tmp_file, print_, path_to_segments, pathd_to_segments, subdivideCubicPath,
+    BaseEffect
+)
 from fablab_tsf_lib import TsfFileEffect
 from fablab_path_lib import Polyline, Segment
 from fablab_tsf2svg_lib import TsfFilePreviewer
@@ -34,20 +40,56 @@ class TsfEffect(BaseEffect, TsfFileEffect):
 
     def __init__(self):
         BaseEffect.__init__(self)
-        self.OptionParser.add_option('--tabs', action='store', type='string', default='Job')
-        self.OptionParser.add_option('--processmode', action='store', type='choice', choices=['None', 'Standard', 'Layer', 'Stamp', 'Relief', '"Standard"', '"Layer"', '"Stamp"', '"Relief"'], default='None')
-        self.OptionParser.add_option('--jobname', action='store', type='string', default='Job')
-        self.OptionParser.add_option('--jobnumber', action='store', type='int', default=1)
-        self.OptionParser.add_option('--resolution', action='store', type='int', default=500)
-        self.OptionParser.add_option('--layernumber', action='store', type='int', default=1)
-        self.OptionParser.add_option('--layeradjustement', action='store', type='float', default=0)
-        self.OptionParser.add_option('--stampshoulder', action='store', type='choice', choices=['flat', 'medium', 'steep'], default='flat')
-        self.OptionParser.add_option('--cutline', action='store', type='choice', choices=['none', 'circular', 'rectangular', 'optimized'], default='none')
-        self.OptionParser.add_option('--spoolpath', action='store', type='string', default='')
-        #self.OptionParser.add_option('--onlyselection', action="store", type='choice', choices=['true', 'false'], default='true')
-        self.OptionParser.add_option('--optimize', action="store", type='choice', choices=['true', 'false'], default='false')
-        self.OptionParser.add_option('--report', action="store", type='choice', choices=['true', 'false'], default='false')
-        self.OptionParser.add_option('--preview', action="store", type='choice', choices=['true', 'false'], default='false')
+        self.arg_parser.add_argument(
+            '--tabs', action='store', type=str, default='Job')
+        self.arg_parser.add_argument(
+            '--processmode', action='store', type=str, choices=[
+                'None', 'Standard', 'Layer', 'Stamp', 'Relief'
+            ], default='None'
+        )
+        self.arg_parser.add_argument(
+            '--jobname', action='store', type=str, default='Job'
+        )
+        self.arg_parser.add_argument(
+            '--jobnumber', action='store', type=int, default=1
+        )
+        self.arg_parser.add_argument(
+            '--resolution', action='store', type=int, default=500
+        )
+        self.arg_parser.add_argument(
+            '--layernumber', action='store', type=int, default=1
+        )
+        self.arg_parser.add_argument(
+            '--layeradjustement', action='store', type=float, default=0
+        )
+        self.arg_parser.add_argument(
+            '--stampshoulder', action='store', type=str,
+            choices=['flat', 'medium', 'steep'], default='flat'
+        )
+        self.arg_parser.add_argument(
+            '--cutline', action='store', type=str,
+            choices=['none', 'circular', 'rectangular', 'optimized'],
+            default='none'
+        )
+        self.arg_parser.add_argument(
+            '--spoolpath', action='store', type=str, default=''
+        )
+        # self.arg_parser.add_argument(
+        # '--onlyselection', action="store", type=str,
+        # choices=['true', 'false'], default='true'
+        # )
+        self.arg_parser.add_argument(
+            '--optimize', action="store", type=str,
+            choices=['true', 'false'], default='false'
+        )
+        self.arg_parser.add_argument(
+            '--report', action="store", type=str,
+            choices=['true', 'false'], default='false'
+        )
+        self.arg_parser.add_argument(
+            '--preview', action="store", type=str,
+            choices=['true', 'false'], default='false'
+        )
 
     def generate_bmp(self, tmp_bmp):
         with tmp_file(".png", text=False) as tmp_png:
@@ -69,12 +111,12 @@ class TsfEffect(BaseEffect, TsfFileEffect):
                                     os.path.join(os.getcwd(), 'fablab_monochrome.bmp'), '-compress', 'NONE', 'BMP3:%s' % tmp_bmp)
 
     def onlyselected(self):
-        return self.selected #and self.options.onlyselection == 'true'
+        return self.svg.selected #and self.options.onlyselection == 'true'
 
     def job_filepath(self):
         filepath = os.path.join(self.options.spoolpath, "%s.tsf" % (self.options.jobname))
         jobname = self.options.jobname
-        cnt = 0
+        cnt = 1
         while(os.path.isfile(filepath)):
             cnt += 1
             jobname = "%s_%s" % (self.options.jobname, cnt)
@@ -90,7 +132,7 @@ class TsfEffect(BaseEffect, TsfFileEffect):
         else:
             # optimise
             # for polyline in Polyline.generate_from_segments(Segment.convertToSegmentSet(path_nodes)):
-            fablab_path_lib.update_precision_factor(self.unittouu("10px"))
+            fablab_path_lib.update_precision_factor(self.svg.unittouu("10px"))
             for polyline in Polyline.generate_from_segment_array(list(Segment.convertToSegmentSet(path_nodes))):
                 for points in pathd_to_segments(polyline.format()):
                     yield points
@@ -112,7 +154,7 @@ class TsfEffect(BaseEffect, TsfFileEffect):
 
         # remove all objects not in selection
         if(self.onlyselected()):
-            for k in self.selected:
+            for k in self.svg.selected:
                 ink_args.append('--select=%s' % k)
 
             ink_args.append("--verb=EditInvertInAllLayers")
@@ -145,7 +187,7 @@ class TsfEffect(BaseEffect, TsfFileEffect):
         with self.inkscaped(ink_args, needX=True) as tmp:
             # get document size to test if path are in visble zone
             print_("get document size to test if path are in visble zone %s" % tmp)
-            doc_width, doc_height = self.unittouu(self.document.getroot().get('width')), self.unittouu(self.document.getroot().get('height'))
+            doc_width, doc_height = self.svg.unittouu(self.document.getroot().get('width')), self.svg.unittouu(self.document.getroot().get('height'))
             output_file = None
 
             # start generating tsf
@@ -168,8 +210,15 @@ class TsfEffect(BaseEffect, TsfFileEffect):
                 path_color = path_style.get('stroke', None)
                 if path_color in TROTEC_COLORS:
                     try:
-                        xmin, xmax, ymin, ymax = simpletransform.computeBBox([path])
-                        if self.onlyselected() or all([xmin >= 0, ymin >= 0, xmax <= doc_width, ymax <= doc_height]):
+                        bbox = inkex.paths.Path(path.get('d')).bounding_box()
+                        inkex.errormsg("== bbox : %s"%bbox)
+                        # xmin, xmax, ymin, ymax = simpletransform.computeBBox([path])
+                        if self.onlyselected() or all([
+                            bbox.left >= 0, 
+                            bbox.top >= 0, 
+                            bbox.right <= doc_width, 
+                            bbox.bottom <= doc_height
+                        ]):
                             path_style['stroke-opacity'] = '0'
                             path.set('style', simplestyle.formatStyle(path_style))
                             paths_by_color.setdefault(path_color, []).append(path)
@@ -220,4 +269,4 @@ class TsfEffect(BaseEffect, TsfFileEffect):
                 inkex.errormsg(u"Votre fichier est prêt à être decoupé.")
 
 if __name__ == '__main__':
-    TsfEffect().affect(output=False)
+    TsfEffect().run(output=False)
