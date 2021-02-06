@@ -1,17 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <inkscape-extension>
-  <_name>Generer une ligne d'encoches</_name>
+  <name>Generer une ligne d'encoches</name>
   <id>cc.bumblebee.fablab.tabsgenerator</id>
   <dependency type="executable" location="extensions">fablab_tabs_generator.py</dependency>
   <dependency type="executable" location="extensions">inkex.py</dependency>
   
-  <param name="path_id" type="string" _gui-text="ID svg de la boite (prefixe))">encoches</param>
-
-  <param name="width" type="float" precision="2" min="0" max="9999999"  _gui-text="Largeur (mm)">200.00</param>
-  <param name="thickness" type="float" precision="2" min="0" max="9999999"  _gui-text="Epaisseur du matériau (mm)">3.00</param>
-  <param name="tab_size" type="float" precision="2" min="0" max="9999999"  _gui-text="Largeur des encoches (mm)">10.00</param>
-  <param name="backlash" type="float" precision="2" min="-9999999" max="9999999"  _gui-text="Jeu à compenser (mm)">0.00</param>
+  <param name="path_id" type="string"
+         gui-text="ID svg de la boite (prefixe))">encoches</param>
+  <param name="width" type="float" precision="2" min="0" max="9999999"
+         gui-text="Largeur (mm)">200.00</param>
+  <param name="thickness" type="float" precision="2" min="0" max="9999999"
+         gui-text="Epaisseur du matériau (mm)">3.00</param>
+  <param name="tab_size" type="float" precision="2" min="0" max="9999999"
+         gui-text="Largeur des encoches (mm)">10.00</param>
+  <param name="backlash" type="float" precision="2" min="-9999999" max="9999999"
+         gui-text="Jeu à compenser (mm)">0.00</param>
   
  
   
@@ -19,10 +23,10 @@
   <effect>
     <object-type>all</object-type>
     <effects-menu>
-       <submenu _name="Fablab"/>
+       <submenu name="Fablab"/>
     </effects-menu>
   </effect>
   <script>
-    <command reldir="extensions" interpreter="python">fablab_tabs_generator.py</command>
+    <command location="extensions" interpreter="python">fablab_tabs_generator.py</command>
   </script>
 </inkscape-extension>

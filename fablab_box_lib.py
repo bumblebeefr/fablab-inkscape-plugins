@@ -21,9 +21,12 @@ class BoxEffect():
              * pour un materiau d'epaisseur <thickness>.
              *
              * Options :
-             *  - direction : 0 haut de la face, 1 droite de la face, 2 bas de la face, 3 gauche de la face.
-             *  - firstUp : Indique si l'on demarre en haut d'un crenau (true) ou en bas du crenau (false - defaut)
-             *  - lastUp : Indique si l'on fin en haut d'un crenau (true) ou en bas du crenau (false - defaut)
+             *  - direction : 0 haut de la face, 1 droite de la face, 2 bas
+             *                de la face, 3 gauche de la face.
+             *  - firstUp : Indique si l'on demarre en haut d'un crenau (true)
+             *              ou en bas du crenau (false - defaut)
+             *  - lastUp : Indique si l'on fin en haut d'un crenau (true) ou
+             *             en bas du crenau (false - defaut)
         '''
         # Calcultate tab size and number
 
@@ -33,20 +36,27 @@ class BoxEffect():
         tab_real_width = length / nb_tabs
 
         # Check if no inconsistency on tab size and number
-        #print("Pour une largeur de %s et des encoches de %s => Nombre d'encoches : %s Largeur d'encoche : %s" % (length, tab_width, nb_tabs, tab_real_width))
         if (tab_real_width <= thickness * 1.5):
-            raise BoxGenrationError("Attention les encoches resultantes (%.2f mm) ne sont pas assez larges au vue de l'epasseur de votre materiaux. Merci d'augmenter la largeur des encoches." % (tab_real_width, ))
+            raise BoxGenrationError(
+                "Attention les encoches resultantes (%.2f mm) ne sont pas "
+                "assez larges au vue de l'epasseur de votre materiaux. Merci "
+                "d'augmenter la largeur des encoches." % (tab_real_width, )
+            )
 
-    #     if (nb_tabs <= 1):
-    #         raise BoxGenrationError("Attention vous n'aurez aucune encoche sur cette longeur, c'est une mauvaise idée !!! Indiquez une taill d'encoche correcte pour votre taille de boite")
+        return self._rotate_path(
+            self._generate_tabs_path(
+                tab_real_width,
+                nb_tabs,
+                thickness,
+                direction=direction,
+                **args),
+            direction
+        )
 
-        return self._rotate_path(self._generate_tabs_path(tab_real_width, nb_tabs, thickness, direction=direction, **args), direction)
-
-    def _generate_tabs_path(self, tab_width, nb_tabs, thickness, cutOff=False, inverted=False, firstUp=False, lastUp=False, backlash=0, **args):
-        # if (cutOff):
-            #print("Generation d'un chemin avec l'option cuttOff")
-        # else:
-            #print("Generation d'un chemin sans l'option cuttOff")
+    def _generate_tabs_path(
+        self, tab_width, nb_tabs, thickness, cutOff=False,
+        inverted=False, firstUp=False, lastUp=False, backlash=0, **args
+    ):
 
         points = []
         for i in range(1, nb_tabs + 1):
@@ -56,7 +66,13 @@ class BoxEffect():
                         points.append([0, thickness])
 
                     if(i == 1 or i == nb_tabs):
-                        points.append([tab_width - [0, thickness][cutOff] - (0.5 * backlash), 0])
+                        points.append(
+                            [
+                                tab_width -
+                                [0, thickness][cutOff] -
+                                (0.5 * backlash), 0
+                            ]
+                        )
                     else:
                         points.append([tab_width - backlash, 0])
 
@@ -72,7 +88,13 @@ class BoxEffect():
                         points.append([0, -thickness])
 
                     if(i == 1 or i == nb_tabs):
-                        points.append([tab_width - [0, thickness][cutOff] + (0.5 * backlash), 0])
+                        points.append(
+                            [
+                                tab_width -
+                                [0, thickness][cutOff] +
+                                (0.5 * backlash), 0
+                            ]
+                        )
                     else:
                         points.append([tab_width + backlash, 0])
 
@@ -103,10 +125,13 @@ class BoxEffect():
         if type(arr) is list:
             return [self.mm2u(coord) for coord in arr]
         else:
-            return self.unittouu("%smm" % arr)
+            return self.svg.unittouu("%smm" % arr)
 
     def toPathString(self, arr, end=" z"):
-        return "m %s%s" % (' '.join([','.join([str(c) for c in pt]) for pt in arr]), end)
+        return "m %s%s" % (
+            ' '.join([','.join([str(c) for c in pt]) for pt in arr]),
+            end
+        )
 
     def getPath(self, path, path_id, _x, _y, bg, fg):
         style = ''
@@ -152,8 +177,9 @@ class BoxEffect():
                                 ))
         return points
 
-    def _front_without_top(self, width, height, tab_width, thickness, backlash):
-        # print("_front_without_top")
+    def _front_without_top(
+        self, width, height, tab_width, thickness, backlash
+    ):
         points = [[0, 0], [width, 0]]
         points.extend(self.tabs(height - thickness, tab_width, thickness,
                                 direction=1,
