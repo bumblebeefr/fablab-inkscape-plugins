@@ -151,17 +151,20 @@ class TsfEffect(BaseEffect, TsfFileEffect):
                 inkex.errormsg(u"Le chemin spécifié (%s) pour le répértoire de spool où seront exportés les fichier tsf est incorrect." % self.options.spoolpath)
                 return
 
-       ##inkscape  --actions="select-all;object-to-path;export-filename:/tmp/exported2.svg; export-do;" /tmp/dessin.svg
         tmp_f = '/tmp/obj-to-path.svg'
-        inkex.errormsg('== nb text : %s' % len(list(self.document.getroot().iterdescendants("{http://www.w3.org/2000/svg}text"))))
+
+       
         actions = '--actions=select-all;object-to-path;export-filename:%s;export-do;' % tmp_f
         inkex.command.inkscape(actions, self.options.input_file)
         inkex.errormsg("inkscape %s %s" % (actions, self.options.input_file))
-        with self.reloaded_from_file(tmp_f) as tmp:
-            inkex.errormsg('== nb text : %s' % len(list(self.document.getroot().iterdescendants("{http://www.w3.org/2000/svg}text"))))
+        with open(tmp_f) as tmp:
+            doc = inkex.load_svg(tmp)
+            root = doc.getroot()
+
+            inkex.errormsg('== nb text : %s' % len(list(root.iterdescendants("{http://www.w3.org/2000/svg}text"))))
             # get document size to test if path are in visble zone
             print_("get document size to test if path are in visble zone %s" % tmp)
-            doc_width, doc_height = self.svg.unittouu(self.document.getroot().get('width')), self.svg.unittouu(self.document.getroot().get('height'))
+            doc_width, doc_height = self.svg.unittouu(root.get('width')), self.svg.unittouu(root.get('height'))
             output_file = None
 
             # start generating tsf
@@ -179,7 +182,7 @@ class TsfEffect(BaseEffect, TsfFileEffect):
             # get paths to cut from file, store them by color
             print_("get paths to cut from file, store them by color")
             paths_by_color = {}
-            for path in self.document.getroot().iterdescendants("{http://www.w3.org/2000/svg}path"):
+            for path in root.iterdescendants("{http://www.w3.org/2000/svg}path"):
                 path_style = dict(inkex.Style.parse_str(path.get('style', '')))
                 path_color = path_style.get('stroke', None)
                 inkex.errormsg('== path : %s' % path)
