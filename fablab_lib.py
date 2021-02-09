@@ -5,6 +5,8 @@ import tempfile
 import subprocess
 from distutils import spawn
 import inkex.elements
+import inkex.bezier
+from inkex.paths import CubicSuperPath
 
 import cubicsuperpath
 import simplepath
@@ -118,7 +120,8 @@ def tmp_file(ext, text=True):
         yield tmp
     finally:
         try:
-            os.remove(tmp)
+            pass
+            # os.remove(tmp)
         except OSError:
             pass
 
@@ -139,30 +142,36 @@ def print_(*arg):
             pass
 
 
+def tuples_to_list(val):
+    if(type(val) in (list,tuple)):
+        return [tuples_to_list(v) for v in val]
+    return val
+
 def path_to_segments(node, smoothness=0.1):
     '''
         Generator to convert a path node to an interator on
         segmented paths (bezier curves broken to approximated
         straights lines).
     '''
-    mat = simpletransform.composeParents(node, [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
-    d = node.get('d')
 
-    if len(simplepath.parsePath(d)) == 0:
+    if len(node.path.to_arrays()) == 0:
         return
 
-    p = cubicsuperpath.parsePath(d)
-    simpletransform.applyTransformToPath(mat, p)
+    # Should we not apply transformation ?? 
+    # mat = simpletransform.composeParents(
+    #     node, [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]
+    # )
+    # d = node.get('d')
+    # p = cubicsuperpath.parsePath(d)
+    # simpletransform.applyTransformToPath(mat, p)
 
-    # p is now a list of lists of cubic beziers [ctrl p1, ctrl p2, endpoint]
-    # where the start-point is the last point in the previous segment
+    super_path = node.path.to_superpath()
+    inkex.bezier.cspsubdiv(super_path, smoothness)
 
-    for sp in p:
-        path = []
-        subdivideCubicPath(sp, smoothness)
-        for csp in sp:
-            path.append([csp[1][0], csp[1][1]])
-        yield path
+    # keep only starting points of each "small" curve to convert
+    # to line-segments
+    for sp in super_path:
+        yield [[csp[1][0], csp[1][1]] for csp in sp]
 
 
 def pathd_to_segments(d, smoothness=0.2):
@@ -243,22 +252,31 @@ class BaseEffect(inkex.Effect):
             yield tmp
         finally:
             try:
-                os.remove(tmp)
+                pass
+                # os.remove(tmp)
             except(OSError):
                 pass
 
     @contextmanager
     def reloaded_from_file(self, tmp):
+        inkex.errormsg('-- nb text : %s' % len(list(self.document.getroot().iterdescendants("{http://www.w3.org/2000/svg}text"))))
+        self.clean_up()
         self.load(tmp)
+        inkex.errormsg('-- nb text : %s' % len(list(self.document.getroot().iterdescendants("{http://www.w3.org/2000/svg}text"))))
         try:
             yield
+            self.clean_up()
         finally:
             self.load_raw()
+            self.clean_up()
+            inkex.errormsg('-- nb text : %s' % len(list(self.document.getroot().iterdescendants("{http://www.w3.org/2000/svg}text"))))
 
     @contextmanager
     def inkscaped(self, arguments=[], needX=False):
         with self.as_tmp_svg() as tmp:
-            ink_args =  arguments + ["--verb=FileSave", "--verb=FileQuit", tmp]
+            inkex.errormsg('-- tmp svg : %s' % tmp)
+            ink_args = arguments + ["--verb=FileSave", "--verb=FileQuit", tmp]
+            inkex.errormsg('-- ink_args : %s' % ink_args)
             if needX:
                 inkscapeX_command(*ink_args)
             else:

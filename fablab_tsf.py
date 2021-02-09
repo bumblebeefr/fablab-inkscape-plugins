@@ -3,7 +3,10 @@
 import os
 import simplestyle
 import inkex.paths
+from inkex.elements import ShapeElement
+import inkex.command
 import time
+import tempfile
 
 from fablab_lib import (
     ImageMagickError, execute_command, execute_async_command, inkscape_command,
@@ -148,43 +151,14 @@ class TsfEffect(BaseEffect, TsfFileEffect):
                 inkex.errormsg(u"Le chemin spécifié (%s) pour le répértoire de spool où seront exportés les fichier tsf est incorrect." % self.options.spoolpath)
                 return
 
-        # unlock all object to be able do to what we want on it
-        ink_args.append("--verb=LayerUnlockAll")
-        ink_args.append("--verb=UnlockAllInAllLayers")
-
-        # remove all objects not in selection
-        if(self.onlyselected()):
-            for k in self.svg.selected:
-                ink_args.append('--select=%s' % k)
-
-            ink_args.append("--verb=EditInvertInAllLayers")
-            ink_args.append("--verb=EditDelete")
-            ink_args.append("--verb=FitCanvasToDrawing")
-
-        # unlink clones
-        for node in self.document.getroot().iterdescendants("{http://www.w3.org/2000/svg}use"):
-            ink_args.append('--select=%s' % node.get("id"))
-            ink_args.append("--verb=EditUnlinkClone")
-
-        # ungroup groups
-        for node in self.document.getroot().iterdescendants("{http://www.w3.org/2000/svg}g"):
-            ink_args.append('--select=%s' % node.get("id"))
-            ink_args.append("--verb=SelectionUnGroup")
-
-        # convert texts to paths
-        for node in self.document.getroot().iterdescendants("{http://www.w3.org/2000/svg}text"):
-            ink_args.append('--select=%s' % node.get("id"))
-            ink_args.append("--verb=ObjectToPath")
-
-        # ultimate un-group => remove groups generated when converting text to paths
-        ink_args.append("--verb=EditSelectAll")
-        ink_args.append("--verb=SelectionUnGroup")
-
-        # ultimate object to path, convert last vector objects to paths
-        ink_args.append("--verb=EditSelectAll")
-        ink_args.append("--verb=ObjectToPath")
-
-        with self.inkscaped(ink_args, needX=True) as tmp:
+       ##inkscape  --actions="select-all;object-to-path;export-filename:/tmp/exported2.svg; export-do;" /tmp/dessin.svg
+        tmp_f = '/tmp/obj-to-path.svg'
+        inkex.errormsg('== nb text : %s' % len(list(self.document.getroot().iterdescendants("{http://www.w3.org/2000/svg}text"))))
+        actions = '--actions=select-all;object-to-path;export-filename:%s;export-do;' % tmp_f
+        inkex.command.inkscape(actions, self.options.input_file)
+        inkex.errormsg("inkscape %s %s" % (actions, self.options.input_file))
+        with self.reloaded_from_file(tmp_f) as tmp:
+            inkex.errormsg('== nb text : %s' % len(list(self.document.getroot().iterdescendants("{http://www.w3.org/2000/svg}text"))))
             # get document size to test if path are in visble zone
             print_("get document size to test if path are in visble zone %s" % tmp)
             doc_width, doc_height = self.svg.unittouu(self.document.getroot().get('width')), self.svg.unittouu(self.document.getroot().get('height'))
@@ -206,24 +180,29 @@ class TsfEffect(BaseEffect, TsfFileEffect):
             print_("get paths to cut from file, store them by color")
             paths_by_color = {}
             for path in self.document.getroot().iterdescendants("{http://www.w3.org/2000/svg}path"):
-                path_style = simplestyle.parseStyle(path.get('style', ''))
+                path_style = dict(inkex.Style.parse_str(path.get('style', '')))
                 path_color = path_style.get('stroke', None)
+                inkex.errormsg('== path : %s' % path)
+                inkex.errormsg('== color : %s' % path_color)
+                inkex.errormsg('==doc size : %sx%s' %(doc_width,doc_height))
                 if path_color in TROTEC_COLORS:
                     try:
-                        bbox = inkex.paths.Path(path.get('d')).bounding_box()
-                        inkex.errormsg("== bbox : %s"%bbox)
-                        # xmin, xmax, ymin, ymax = simpletransform.computeBBox([path])
+                        bbox = path.bounding_box()
                         if self.onlyselected() or all([
                             bbox.left >= 0, 
                             bbox.top >= 0, 
                             bbox.right <= doc_width, 
                             bbox.bottom <= doc_height
                         ]):
+                            inkex.errormsg("Path is ok")
                             path_style['stroke-opacity'] = '0'
-                            path.set('style', simplestyle.formatStyle(path_style))
+                            path.set('style', str(inkex.Style(path_style)))
                             paths_by_color.setdefault(path_color, []).append(path)
                     except TypeError:
+                        inkex.errormsg("TypeError ops !")
                         pass
+
+            inkex.errormsg("== paths_by_color : %s" % paths_by_color)
 
             with tmp_file(".bmp", text=False) as tmp_bmp:
                 try:
@@ -240,8 +219,10 @@ class TsfEffect(BaseEffect, TsfFileEffect):
                 print_("generate png then bmp for engraving")
                 with self.draw_tsf_commands() as draw_polygon:
                     for path_color in paths_by_color:
-                        r, g, b = simplestyle.parseColor(path_color)
-                        for points in self.paths_to_unit_segments(paths_by_color[path_color]):
+                        r, g, b = inkex.Color(path_color).to_rgb()
+                        for points in self.paths_to_unit_segments(
+                            paths_by_color[path_color]
+                        ):
                             draw_polygon(r, g, b, points)
 
                 end_time = time.time()
