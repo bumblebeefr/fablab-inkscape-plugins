@@ -47,14 +47,6 @@ def iter_path_nodes(element):
                     "{http://www.w3.org/2000/svg}path"
                 )
 
-class WorkingCopy():
-
-    def __init__(input_file):
-        self._input_file = input_file
-        self.working_file = '/tmp/working-copy.svg'
-        self.root = working_copy = inkex.load_svg(tmp)
-        
-
 
 class TsfEffect(BaseEffect, TsfFileEffect):
 
@@ -94,20 +86,16 @@ class TsfEffect(BaseEffect, TsfFileEffect):
         self.arg_parser.add_argument(
             '--spoolpath', action='store', type=str, default=''
         )
-        # self.arg_parser.add_argument(
-        # '--onlyselection', action="store", type=str,
-        # choices=['true', 'false'], default='true'
-        # )
-        self.arg_parser.add_argument(
-            '--optimize', action="store", type=str,
-            choices=['true', 'false'], default='false'
-        )
         self.arg_parser.add_argument(
             '--report', action="store", type=str,
             choices=['true', 'false'], default='false'
         )
         self.arg_parser.add_argument(
             '--preview', action="store", type=str,
+            choices=['true', 'false'], default='false'
+        )
+        self.arg_parser.add_argument(
+            '--optimize', action="store", type=str,
             choices=['true', 'false'], default='false'
         )
 
@@ -131,7 +119,7 @@ class TsfEffect(BaseEffect, TsfFileEffect):
                                     os.path.join(os.getcwd(), 'fablab_monochrome.bmp'), '-compress', 'NONE', 'BMP3:%s' % tmp_bmp)
 
     def onlyselected(self):
-        return self.svg.selected #and self.options.onlyselection == 'true'
+        return True if self.svg.selected else False
 
     def job_filepath(self):
         filepath = os.path.join(self.options.spoolpath, "%s.tsf" % (self.options.jobname))
@@ -144,24 +132,30 @@ class TsfEffect(BaseEffect, TsfFileEffect):
 
         return jobname, filepath
 
+        
+
     def paths_to_unit_segments(self, path_nodes):
-        if self.options.optimize == 'false':
-            for path in path_nodes:
-                for points in path_to_segments(path):
-                    yield points
-        else:
-            # optimise
-            # for polyline in Polyline.generate_from_segments(Segment.convertToSegmentSet(path_nodes)):
-            fablab_path_lib.update_precision_factor(self.svg.unittouu("10px"))
-            for polyline in Polyline.generate_from_segment_array(list(Segment.convertToSegmentSet(path_nodes))):
-                for points in pathd_to_segments(polyline.format()):
-                    yield points
-
-
+        viewbox = self.svg.get_viewbox()
+        for path in path_nodes:
+            for points in path_to_segments(path):
+                yield [
+                    (point[0] - viewbox[0],point[1] - viewbox[1])
+                    for point
+                    in points
+                ]
 
     def has_changed(self, ret): 
-        #we do not want modifications to be visible after exections
+        # we do not want modifications to be visible after exections
         return False
+
+    def is_in_viewbox(self, bbox):
+        viewbox = self.svg.get_viewbox()
+        return all([
+            bbox.left >= viewbox[0] ,
+            bbox.top >= viewbox[1], 
+            bbox.right <= viewbox[0]+viewbox[2], 
+            bbox.bottom <= viewbox[1]+viewbox[3]
+        ])
 
     def effect(self):
         self.options.processmode = self.options.processmode.replace('"', '')
@@ -186,30 +180,16 @@ class TsfEffect(BaseEffect, TsfFileEffect):
                 f.write(document.decode('utf-8'))
             del document
             working_file = '/tmp/output.svg'
-
-        # with open(self.options.input_file) as tmp:
-        #     working_copy = inkex.load_svg(tmp)
-        #     svg = working_copy.getroot()
-        #     svg.set_selected(*self.options.ids)
-        #     selection_bbox = self.svg.get_selected_bbox()
-        #     inkex.errormsg("working_copy : %s" % svg)
-        #     svg.set('viewBox', f'{selection_bbox.left} {selection_bbox.top} {selection_bbox.width} {selection_bbox.height}')
-        #     svg.set('width',f'{selection_bbox.width}{self.svg.unit}')
-        #     svg.set('height', f'{selection_bbox.height}{self.svg.unit}')
-        #     inkex.errormsg("unit : %s %s" % svg.unit, self.svg.unit)
-        #     document = etree.tostring(working_copy)
-        #     with open('/tmp/output.svg', 'w+') as f:
-        #         f.write(document.decode('utf-8'))
        
+        inkex.errormsg("View box %s" % self.svg.get_viewbox())
+
         tmp_f ='/tmp/tmp.svg'
-        actions = '--actions=select-all;object-to-path;export-filename:%s;export-do;' % tmp_f
+        actions = '--actions=select-all;object-unlink-clones;select-all;object-to-path;export-filename:%s;export-do;' % tmp_f
         inkex.command.inkscape(actions, working_file)
         with open(tmp_f) as tmp:
             doc = inkex.load_svg(tmp)
             root = doc.getroot()
             root.set_selected(*self.options.ids)
-
-            
 
             # get document size to test if path are in visble zone
             print_("get document size to test if path are in visble zone %s" % tmp)
@@ -253,16 +233,14 @@ class TsfEffect(BaseEffect, TsfFileEffect):
                 if path_color in TROTEC_COLORS:
                     try:
                         bbox = path.bounding_box()
-                        if self.onlyselected() or all([
-                            bbox.left >= 0, 
-                            bbox.top >= 0, 
-                            bbox.right <= doc_width, 
-                            bbox.bottom <= doc_height
-                        ]):
+                        inkex.errormsg('== path bbox : %s' % bbox)
+                        if self.onlyselected() or self.is_in_viewbox(bbox):
                             inkex.errormsg("Path is ok")
                             path_style['stroke-opacity'] = '0'
                             path.set('style', str(inkex.Style(path_style)))
-                            paths_by_color.setdefault(path_color, []).append(path)
+                            paths_by_color.setdefault(
+                                path_color, []
+                            ).append(path)
                     except TypeError:
                         inkex.errormsg("TypeError ops !")
                         pass
