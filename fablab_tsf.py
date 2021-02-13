@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # encoding: utf-8
 import os
-import simplestyle
-import inkex.paths
-from inkex.elements import ShapeElement
+from lxml import etree
 import inkex.command
 import time
 import tempfile
+from itertools import chain
+
 
 from fablab_lib import (
     ImageMagickError, execute_command, execute_async_command, inkscape_command,
@@ -37,6 +37,23 @@ TROTEC_COLORS = [
     '#ff6600',
     '#ffff00'
 ]
+
+def iter_path_nodes(element):
+    inkex.errormsg("== element.tag : %s" % element.tag)
+    if element.tag == '{http://www.w3.org/2000/svg}path':
+        yield element
+    else :
+        yield from element.iterdescendants(
+                    "{http://www.w3.org/2000/svg}path"
+                )
+
+class WorkingCopy():
+
+    def __init__(input_file):
+        self._input_file = input_file
+        self.working_file = '/tmp/working-copy.svg'
+        self.root = working_copy = inkex.load_svg(tmp)
+        
 
 
 class TsfEffect(BaseEffect, TsfFileEffect):
@@ -140,6 +157,12 @@ class TsfEffect(BaseEffect, TsfFileEffect):
                 for points in pathd_to_segments(polyline.format()):
                     yield points
 
+
+
+    def has_changed(self, ret): 
+        #we do not want modifications to be visible after exections
+        return False
+
     def effect(self):
         self.options.processmode = self.options.processmode.replace('"', '')
 
@@ -151,20 +174,47 @@ class TsfEffect(BaseEffect, TsfFileEffect):
                 inkex.errormsg(u"Le chemin spécifié (%s) pour le répértoire de spool où seront exportés les fichier tsf est incorrect." % self.options.spoolpath)
                 return
 
-        tmp_f = '/tmp/obj-to-path.svg'
+        working_file = self.options.input_file
 
+        if(self.onlyselected()):
+            selection_bbox = self.svg.get_selected_bbox()
+            self.svg.set('viewBox', f'{selection_bbox.left} {selection_bbox.top} {selection_bbox.width} {selection_bbox.height}')
+            self.svg.set('width',f'{selection_bbox.width}{self.svg.unit}')
+            self.svg.set('height', f'{selection_bbox.height}{self.svg.unit}')
+            document = etree.tostring(self.document)
+            with open('/tmp/output.svg', 'w+') as f:
+                f.write(document.decode('utf-8'))
+            del document
+            working_file = '/tmp/output.svg'
+
+        # with open(self.options.input_file) as tmp:
+        #     working_copy = inkex.load_svg(tmp)
+        #     svg = working_copy.getroot()
+        #     svg.set_selected(*self.options.ids)
+        #     selection_bbox = self.svg.get_selected_bbox()
+        #     inkex.errormsg("working_copy : %s" % svg)
+        #     svg.set('viewBox', f'{selection_bbox.left} {selection_bbox.top} {selection_bbox.width} {selection_bbox.height}')
+        #     svg.set('width',f'{selection_bbox.width}{self.svg.unit}')
+        #     svg.set('height', f'{selection_bbox.height}{self.svg.unit}')
+        #     inkex.errormsg("unit : %s %s" % svg.unit, self.svg.unit)
+        #     document = etree.tostring(working_copy)
+        #     with open('/tmp/output.svg', 'w+') as f:
+        #         f.write(document.decode('utf-8'))
        
+        tmp_f ='/tmp/tmp.svg'
         actions = '--actions=select-all;object-to-path;export-filename:%s;export-do;' % tmp_f
-        inkex.command.inkscape(actions, self.options.input_file)
-        inkex.errormsg("inkscape %s %s" % (actions, self.options.input_file))
+        inkex.command.inkscape(actions, working_file)
         with open(tmp_f) as tmp:
             doc = inkex.load_svg(tmp)
             root = doc.getroot()
+            root.set_selected(*self.options.ids)
 
-            inkex.errormsg('== nb text : %s' % len(list(root.iterdescendants("{http://www.w3.org/2000/svg}text"))))
+            
+
             # get document size to test if path are in visble zone
             print_("get document size to test if path are in visble zone %s" % tmp)
-            doc_width, doc_height = self.svg.unittouu(root.get('width')), self.svg.unittouu(root.get('height'))
+            doc_width = self.svg.unittouu(root.get('width'))
+            doc_height = self.svg.unittouu(root.get('height'))
             output_file = None
 
             # start generating tsf
@@ -182,12 +232,24 @@ class TsfEffect(BaseEffect, TsfFileEffect):
             # get paths to cut from file, store them by color
             print_("get paths to cut from file, store them by color")
             paths_by_color = {}
-            for path in root.iterdescendants("{http://www.w3.org/2000/svg}path"):
+
+            if self.onlyselected():
+                selection_bbox = root.get_selected_bbox()
+                inkex.errormsg("selection bbox %s" % selection_bbox)
+                iterdescendants = [
+                    iter_path_nodes(node) 
+                    for node in root.selected.values()
+                ]
+                path_itertor = chain(*iterdescendants)
+            else:
+                path_itertor = iter_path_nodes(root)
+
+            for path in path_itertor:
                 path_style = dict(inkex.Style.parse_str(path.get('style', '')))
                 path_color = path_style.get('stroke', None)
                 inkex.errormsg('== path : %s' % path)
                 inkex.errormsg('== color : %s' % path_color)
-                inkex.errormsg('==doc size : %sx%s' %(doc_width,doc_height))
+                inkex.errormsg('==doc size : %sx%s' % (doc_width, doc_height))
                 if path_color in TROTEC_COLORS:
                     try:
                         bbox = path.bounding_box()
