@@ -7,7 +7,7 @@ from distutils import spawn
 import inkex.elements
 import inkex.bezier
 from inkex.paths import CubicSuperPath
-
+from inkex.extensions import EffectExtension
 import cubicsuperpath
 import simplepath
 import simpletransform
@@ -157,15 +157,10 @@ def path_to_segments(node, smoothness=0.1):
     if len(node.path.to_arrays()) == 0:
         return
 
-    # Should we not apply transformation ?? 
-    # mat = simpletransform.composeParents(
-    #     node, [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]
-    # )
-    # d = node.get('d')
-    # p = cubicsuperpath.parsePath(d)
-    # simpletransform.applyTransformToPath(mat, p)
 
-    super_path = node.path.to_superpath()
+    transform_chain = node.composed_transform()
+    transformed_path = node.path.to_absolute().transform(transform_chain)
+    super_path = transformed_path.to_superpath()
     inkex.bezier.cspsubdiv(super_path, smoothness)
 
     # keep only starting points of each "small" curve to convert
@@ -231,55 +226,34 @@ def subdivideCubicPath(sp, flat, i=1):
         sp[i:1] = [p]
 
 
-class BaseEffect(inkex.Effect):
+class BaseEffect(EffectExtension):
+    pass
 
-    def __init__(self):
-        inkex.Effect.__init__(self)
 
-    @contextmanager
-    def as_tmp_svg(self):
-        '''
-            Work on a temporary .svg copy of this document.
-            example :
 
-            with self.as_tmp_svg as temp_svg:
-                print tmp
-        '''
-        fd, tmp = tempfile.mkstemp(".svg", text=True)
-        os.close(fd)
-        self.document.write(tmp)
-        try:
-            yield tmp
-        finally:
-            try:
-                pass
-                # os.remove(tmp)
-            except(OSError):
-                pass
+    # @contextmanager
+    # def reloaded_from_file(self, tmp):
+    #     inkex.errormsg('-- nb text : %s' % len(list(self.document.getroot().iterdescendants("{http://www.w3.org/2000/svg}text"))))
+    #     self.clean_up()
+    #     self.load(tmp)
+    #     inkex.errormsg('-- nb text : %s' % len(list(self.document.getroot().iterdescendants("{http://www.w3.org/2000/svg}text"))))
+    #     try:
+    #         yield
+    #         self.clean_up()
+    #     finally:
+    #         self.load_raw()
+    #         self.clean_up()
+    #         inkex.errormsg('-- nb text : %s' % len(list(self.document.getroot().iterdescendants("{http://www.w3.org/2000/svg}text"))))
 
-    @contextmanager
-    def reloaded_from_file(self, tmp):
-        inkex.errormsg('-- nb text : %s' % len(list(self.document.getroot().iterdescendants("{http://www.w3.org/2000/svg}text"))))
-        self.clean_up()
-        self.load(tmp)
-        inkex.errormsg('-- nb text : %s' % len(list(self.document.getroot().iterdescendants("{http://www.w3.org/2000/svg}text"))))
-        try:
-            yield
-            self.clean_up()
-        finally:
-            self.load_raw()
-            self.clean_up()
-            inkex.errormsg('-- nb text : %s' % len(list(self.document.getroot().iterdescendants("{http://www.w3.org/2000/svg}text"))))
-
-    @contextmanager
-    def inkscaped(self, arguments=[], needX=False):
-        with self.as_tmp_svg() as tmp:
-            inkex.errormsg('-- tmp svg : %s' % tmp)
-            ink_args = arguments + ["--verb=FileSave", "--verb=FileQuit", tmp]
-            inkex.errormsg('-- ink_args : %s' % ink_args)
-            if needX:
-                inkscapeX_command(*ink_args)
-            else:
-                inkscape_command(*ink_args)
-            with self.reloaded_from_file(tmp):
-                yield tmp
+    # @contextmanager
+    # def inkscaped(self, arguments=[], needX=False):
+    #     with self.as_tmp_svg() as tmp:
+    #         inkex.errormsg('-- tmp svg : %s' % tmp)
+    #         ink_args = arguments + ["--verb=FileSave", "--verb=FileQuit", tmp]
+    #         inkex.errormsg('-- ink_args : %s' % ink_args)
+    #         if needX:
+    #             inkscapeX_command(*ink_args)
+    #         else:
+    #             inkscape_command(*ink_args)
+    #         with self.reloaded_from_file(tmp):
+    #             yield tmp

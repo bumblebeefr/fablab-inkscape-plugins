@@ -6,9 +6,10 @@ import sys
 import re
 
 from fablab_lib import *
+from PIL import Image
 
 
-class TsfFileEffect:
+class TsfFileEffectMixin:
 
     def initialize_tsf(self, options, w=0, h=0, offset_x=0, offset_y=0, jobname=None, output=sys.stdout):
         """

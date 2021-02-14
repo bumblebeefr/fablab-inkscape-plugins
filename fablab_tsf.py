@@ -3,18 +3,19 @@
 import os
 from lxml import etree
 import inkex.command
+from inkex.extensions import EffectExtension
 import time
 import tempfile
 from itertools import chain
+from contextlib import contextmanager
 
 
 from fablab_lib import (
     ImageMagickError, execute_command, execute_async_command, inkscape_command,
     inkscapeX_command, convert_command, identify_command, hex_color,
-    tmp_file, print_, path_to_segments, pathd_to_segments, subdivideCubicPath,
-    BaseEffect
+    tmp_file, print_, path_to_segments, pathd_to_segments, subdivideCubicPath
 )
-from fablab_tsf_lib import TsfFileEffect
+from fablab_tsf_lib import TsfFileEffectMixin
 from fablab_path_lib import Polyline, Segment
 from fablab_tsf2svg_lib import TsfFilePreviewer
 import fablab_path_lib
@@ -48,56 +49,78 @@ def iter_path_nodes(element):
                 )
 
 
-class TsfEffect(BaseEffect, TsfFileEffect):
+class TsfEffect(EffectExtension, TsfFileEffectMixin):
 
-    def __init__(self):
-        BaseEffect.__init__(self)
-        self.arg_parser.add_argument(
+    def add_arguments(self, pars):
+        pars.add_argument(
             '--tabs', action='store', type=str, default='Job')
-        self.arg_parser.add_argument(
+        pars.add_argument(
             '--processmode', action='store', type=str, choices=[
                 'None', 'Standard', 'Layer', 'Stamp', 'Relief'
             ], default='None'
         )
-        self.arg_parser.add_argument(
+        pars.add_argument(
             '--jobname', action='store', type=str, default='Job'
         )
-        self.arg_parser.add_argument(
+        pars.add_argument(
             '--jobnumber', action='store', type=int, default=1
         )
-        self.arg_parser.add_argument(
+        pars.add_argument(
             '--resolution', action='store', type=int, default=500
         )
-        self.arg_parser.add_argument(
+        pars.add_argument(
             '--layernumber', action='store', type=int, default=1
         )
-        self.arg_parser.add_argument(
+        pars.add_argument(
             '--layeradjustement', action='store', type=float, default=0
         )
-        self.arg_parser.add_argument(
+        pars.add_argument(
             '--stampshoulder', action='store', type=str,
             choices=['flat', 'medium', 'steep'], default='flat'
         )
-        self.arg_parser.add_argument(
+        pars.add_argument(
             '--cutline', action='store', type=str,
             choices=['none', 'circular', 'rectangular', 'optimized'],
             default='none'
         )
-        self.arg_parser.add_argument(
+        pars.add_argument(
             '--spoolpath', action='store', type=str, default=''
         )
-        self.arg_parser.add_argument(
+        pars.add_argument(
             '--report', action="store", type=str,
             choices=['true', 'false'], default='false'
         )
-        self.arg_parser.add_argument(
+        pars.add_argument(
             '--preview', action="store", type=str,
             choices=['true', 'false'], default='false'
         )
-        self.arg_parser.add_argument(
+        pars.add_argument(
             '--optimize', action="store", type=str,
             choices=['true', 'false'], default='false'
         )
+
+        
+
+    @contextmanager
+    def as_tmp_svg(self):
+        '''
+            Work on a temporary .svg copy of this document.
+            example :
+
+            with self.as_tmp_svg as temp_svg:
+                print tmp
+        '''
+        fd, tmp = tempfile.mkstemp(".svg", text=True)
+        os.close(fd)
+        self.document.write(tmp)
+        try:
+            yield tmp
+        finally:
+            try:
+                pass
+                # os.remove(tmp)
+            except(OSError):
+                pass
 
     def generate_bmp(self, tmp_bmp):
         with tmp_file(".png", text=False) as tmp_png:
@@ -128,24 +151,20 @@ class TsfEffect(BaseEffect, TsfFileEffect):
         while(os.path.isfile(filepath)):
             cnt += 1
             jobname = "%s_%s" % (self.options.jobname, cnt)
-            filepath = os.path.join(self.options.spoolpath, "%s_%s.tsf" % (self.options.jobname, cnt))
+            filepath = os.path.join(
+                self.options.spoolpath, 
+                "%s_%s.tsf" % (self.options.jobname, cnt)
+            )
 
         return jobname, filepath
 
-        
-
     def paths_to_unit_segments(self, path_nodes):
-        viewbox = self.svg.get_viewbox()
         for path in path_nodes:
             for points in path_to_segments(path):
-                yield [
-                    (point[0] - viewbox[0],point[1] - viewbox[1])
-                    for point
-                    in points
-                ]
+                yield points
 
     def has_changed(self, ret): 
-        # we do not want modifications to be visible after exections
+        # we do not want modifications to be visible after plugin execution
         return False
 
     def is_in_viewbox(self, bbox):
@@ -170,6 +189,7 @@ class TsfEffect(BaseEffect, TsfFileEffect):
 
         working_file = self.options.input_file
 
+        # update viewbox to match selection
         if(self.onlyselected()):
             selection_bbox = self.svg.get_selected_bbox()
             self.svg.set('viewBox', f'{selection_bbox.left} {selection_bbox.top} {selection_bbox.width} {selection_bbox.height}')
@@ -196,16 +216,23 @@ class TsfEffect(BaseEffect, TsfFileEffect):
             doc_width = self.svg.unittouu(root.get('width'))
             doc_height = self.svg.unittouu(root.get('height'))
             output_file = None
+            
 
             # start generating tsf
             print_("start generating tsf")
-            filepath = None
-            if self.options.spoolpath:
-                jobanme, filepath = self.job_filepath()
-                output_file = open(filepath, "w")
-                self.initialize_tsf(self.options, doc_width, doc_height, jobname=jobanme, output=output_file)
-            else:
-                self.initialize_tsf(self.options, doc_width, doc_height)
+            jobanme, filepath = self.job_filepath()
+            output_file = open(filepath, "w")
+            viewbox = self.svg.get_viewbox()
+            self.initialize_tsf(
+                options = self.options, 
+                w = doc_width, 
+                h = doc_height, 
+                jobname=jobanme, 
+                output=output_file,
+                offset_x = viewbox [0],
+                offset_y = viewbox [1]
+            )
+ 
 
             self.write_tsf_header()
 
@@ -224,25 +251,36 @@ class TsfEffect(BaseEffect, TsfFileEffect):
             else:
                 path_itertor = iter_path_nodes(root)
 
-            for path in path_itertor:
-                path_style = dict(inkex.Style.parse_str(path.get('style', '')))
+            inkex.errormsg('==doc size : %sx%s' % (doc_width, doc_height))
+            for path_element in path_itertor:
+                path_style = dict(inkex.Style.parse_str(path_element.get('style', '')))
                 path_color = path_style.get('stroke', None)
-                inkex.errormsg('== path : %s' % path)
-                inkex.errormsg('== color : %s' % path_color)
-                inkex.errormsg('==doc size : %sx%s' % (doc_width, doc_height))
+                inkex.errormsg('== path_element : %s #%s' % (path_element, path_element.get('id')))
+                inkex.errormsg('  -> style : %s' % (path_style))
                 if path_color in TROTEC_COLORS:
+                    #make path not visible
+                    path_style['stroke-opacity'] = '0'
+                    path_style['stroke-width'] = '0'
+                    path_element.set('style', str(inkex.Style(path_style)))
                     try:
-                        bbox = path.bounding_box()
-                        inkex.errormsg('== path bbox : %s' % bbox)
+                        composed_transform = path_element.composed_transform()
+                        bbox = path_element.bounding_box(path_element.composed_transform())
+                        inkex.errormsg(' -> path_element bbox : %s' % bbox)
+                        inkex.errormsg(
+                            ' -> path_element composed_transform : %s' % 
+                            composed_transform
+                        )
                         if self.onlyselected() or self.is_in_viewbox(bbox):
-                            inkex.errormsg("Path is ok")
-                            path_style['stroke-opacity'] = '0'
-                            path.set('style', str(inkex.Style(path_style)))
+                            inkex.errormsg("    -> Path is ok to use")
+                            inkex.errormsg(' -> path_element type : %s' % type(path_element))
+
                             paths_by_color.setdefault(
                                 path_color, []
-                            ).append(path)
-                    except TypeError:
-                        inkex.errormsg("TypeError ops !")
+                            ).append(
+                                path_element
+                            )
+                    except TypeError as e:
+                        inkex.errormsg("TypeError oops : %s"% e)
                         pass
 
             inkex.errormsg("== paths_by_color : %s" % paths_by_color)
@@ -276,17 +314,26 @@ class TsfEffect(BaseEffect, TsfFileEffect):
                 except OSError:
                     pass
             else:
-                inkex.errormsg(u"\n Cliquer sur valider pour terminer l'enregistrement du fichier.")
+                inkex.errormsg(
+                    "\n Cliquer sur valider pour terminer ",
+                    "l'enregistrement du fichier."
+                )
 
             # Display preview
             if self.options.preview == 'true':
                 if(filepath):
                     print_("filepath : %s" % filepath)
                     try:
-                        TsfFilePreviewer(filepath, export_time=round(end_time - start_time, 1)).show_preview()
+                        TsfFilePreviewer(
+                            filepath, 
+                            export_time=round(
+                                end_time - start_time, 1
+                            )
+                        ).show_preview()
                     except Exception as e:
-                        inkex.errormsg(u"Votre fichier est prêt à être decoupé.")
-                        # raise(e)
+                        inkex.errormsg(
+                            u"Votre fichier est prêt à être decoupé."
+                        )
                 else:
                     pass
             else:
