@@ -1,6 +1,10 @@
 fablab-inkscape-plugins
 =======================
 
+⚠️ Cette version n'est pas compatible avec inkscape 1.0 et versions suivantes. Une migration des plugins est en cours sur la branche [inkscape-1.0.x-migration](https://github.com/bumblebeefr/fablab-inkscape-plugins/tree/inkscape-1.0.x-migration).
+
+--
+
 Collection de plugins inkscape utiles ans un fablab
 
 Ces plugins sont fonctionels avec les versions `0.48.x` et `0.91` d'inkscape.
