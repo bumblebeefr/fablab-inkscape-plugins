@@ -72,11 +72,11 @@ class TsfFileEffectMixin:
         if self.header.get('ProcessMode') == 'Stamp':
             self.out.write("<StampShoulder: %s>\n" % self.header.get('StampShoulder', 'flat'))
 
-        self.out.write("<MaterialGroup: %s>\n" % self.header.get('MaterialGroup', 'Standard').encode("iso-8859-1"))
-        self.out.write("<MaterialName: %s>\n" % self.header.get('MaterialName', 'Standard').encode("iso-8859-1"))
+        self.out.write("<MaterialGroup: %s>\n" % self.header.get('MaterialGroup', 'Standard'))
+        self.out.write("<MaterialName: %s>\n" % self.header.get('MaterialName', 'Standard'))
 
         jobname = re.sub(r'[^\x00-\x7F]','#', self.header.get('JobName', 'job'))
-        self.out.write("<JobName: %s>\n" % jobname.encode("iso-8859-1"))
+        self.out.write("<JobName: %s>\n" % jobname)
 
         self._simple_header_out('JobNumber', '2')
         self._simple_header_out('Resolution', '500')

@@ -4,6 +4,8 @@ import os
 from lxml import etree
 import inkex.command
 from inkex.extensions import EffectExtension
+from inkex.transforms import BoundingBox
+from inkex.units import parse_unit
 import time
 import tempfile
 from itertools import chain
@@ -39,14 +41,15 @@ TROTEC_COLORS = [
     '#ffff00'
 ]
 
+
 def iter_path_nodes(element):
     inkex.errormsg("== element.tag : %s" % element.tag)
     if element.tag == '{http://www.w3.org/2000/svg}path':
         yield element
-    else :
+    else:
         yield from element.iterdescendants(
-                    "{http://www.w3.org/2000/svg}path"
-                )
+            "{http://www.w3.org/2000/svg}path"
+        )
 
 
 class TsfEffect(EffectExtension, TsfFileEffectMixin):
@@ -99,8 +102,6 @@ class TsfEffect(EffectExtension, TsfFileEffectMixin):
             choices=['true', 'false'], default='false'
         )
 
-        
-
     @contextmanager
     def as_tmp_svg(self):
         '''
@@ -126,14 +127,17 @@ class TsfEffect(EffectExtension, TsfFileEffectMixin):
         with tmp_file(".png", text=False) as tmp_png:
             with self.as_tmp_svg() as tmp_svg:
                 if(self.onlyselected()):
-                    inkscape_command(tmp_svg, '-z', '-D', '-b', '#ffffff', '-y', '1', '-d', self.options.resolution, '-e', tmp_png)
+                    inkscape_command(tmp_svg, '-z', '-D', '-b', '#ffffff',
+                                     '-y', '1', '-d', self.options.resolution, '-e', tmp_png)
                 else:
-                    inkscape_command(tmp_svg, '-z', '-C', '-b', '#ffffff', '-y', '1', '-d', self.options.resolution, '-e', tmp_png)
+                    inkscape_command(tmp_svg, '-z', '-C', '-b', '#ffffff',
+                                     '-y', '1', '-d', self.options.resolution, '-e', tmp_png)
 
                 if(self.options.processmode in ['Layer', 'Relief']):
                     # convert_command(tmp_png, '-flip', '-separate', '-average', '-colorspace', 'Gray', '-ordered-dither', 'h8x8a,256', '-depth', '8', '-alpha', 'off', '-compress', 'NONE', '-colors', '256', 'BMP3:%s' % tmp_bmp)
                     # convert_command(tmp_png, '-flip', '-level', '0%,100%,4.0', '-separate', '-average', '-colorspace', 'Gray', '-ordered-dither', 'o8x8,16', '-depth', '8', '-alpha', 'off', '-compress', 'NONE', '-colors', '256', 'BMP3:%s' % tmp_bmp)
-                    convert_command(tmp_png, '-flip', '-level', '0%,100%,4.0', '-separate', '-average', '-colorspace', 'Gray', '-ordered-dither', 'o8x8,16', '-depth', '8', '-alpha', 'off', '-remap', os.path.join(os.getcwd(), 'fablab_grayscale.bmp'), '-compress', 'NONE', 'BMP3:%s' % tmp_bmp)
+                    convert_command(tmp_png, '-flip', '-level', '0%,100%,4.0', '-separate', '-average', '-colorspace', 'Gray', '-ordered-dither', 'o8x8,16',
+                                    '-depth', '8', '-alpha', 'off', '-remap', os.path.join(os.getcwd(), 'fablab_grayscale.bmp'), '-compress', 'NONE', 'BMP3:%s' % tmp_bmp)
 
                 else:
                     # convert_command(tmp_png, '-flip', '-separate', '-average', '-colorspace', 'Gray', '-ordered-dither', 'h8x8a,256', '-depth', '8', '-alpha', 'off', '-compress', 'NONE', '-colors', '256', 'BMP3:%s' % tmp_bmp)
@@ -145,14 +149,15 @@ class TsfEffect(EffectExtension, TsfFileEffectMixin):
         return True if self.svg.selected else False
 
     def job_filepath(self):
-        filepath = os.path.join(self.options.spoolpath, "%s.tsf" % (self.options.jobname))
+        filepath = os.path.join(self.options.spoolpath,
+                                "%s.tsf" % (self.options.jobname))
         jobname = self.options.jobname
         cnt = 1
         while(os.path.isfile(filepath)):
             cnt += 1
             jobname = "%s_%s" % (self.options.jobname, cnt)
             filepath = os.path.join(
-                self.options.spoolpath, 
+                self.options.spoolpath,
                 "%s_%s.tsf" % (self.options.jobname, cnt)
             )
 
@@ -163,18 +168,58 @@ class TsfEffect(EffectExtension, TsfFileEffectMixin):
             for points in path_to_segments(path):
                 yield points
 
-    def has_changed(self, ret): 
+    def has_changed(self, ret):
         # we do not want modifications to be visible after plugin execution
         return False
 
     def is_in_viewbox(self, bbox):
         viewbox = self.svg.get_viewbox()
         return all([
-            bbox.left >= viewbox[0] ,
-            bbox.top >= viewbox[1], 
-            bbox.right <= viewbox[0]+viewbox[2], 
+            bbox.left >= viewbox[0],
+            bbox.top >= viewbox[1],
+            bbox.right <= viewbox[0]+viewbox[2],
             bbox.bottom <= viewbox[1]+viewbox[3]
         ])
+
+    def fully_transformed_bounding_box(self, element):
+        transform_chain = element.composed_transform()
+        ftbbox = element.bounding_box(transform_chain)
+
+        inkex.errormsg('Node to compute bbox for : %s #%s' %
+                       (element.tag, element.get('id')))
+        inkex.errormsg(' -> transform_chain: %s' % transform_chain)
+        inkex.errormsg(' -> simple bbox : %s' % element.bounding_box())
+        inkex.errormsg(' -> full tranformed bbox : %s' % ftbbox)
+
+        return ftbbox
+
+    def iter_descendents(self, element):
+        yield element
+        yield from element.iterdescendants()
+
+    def iter_selected_descendents(self):
+        """iterator on selected "leaf" nodes insides selecd groups if needed
+           should not yield group elements"""
+        return filter(
+            lambda element: element.tag != "{http://www.w3.org/2000/svg}g",
+            chain(*[
+                self.iter_descendents(element)
+                for element in self.svg.selected.values()
+            ])
+        )
+
+    def get_selected_bbox(self):
+        """Gets the bounding box of the selected items"""
+        bboxes = (
+            self.fully_transformed_bounding_box(node)
+            for node
+            in self.iter_selected_descendents()
+        )
+        return sum(bboxes, start=BoundingBox(None))
+
+    @property
+    def unit(self):
+        return parse_unit(self.svg.get('width'))[1]
 
     def effect(self):
         self.options.processmode = self.options.processmode.replace('"', '')
@@ -184,26 +229,31 @@ class TsfEffect(EffectExtension, TsfFileEffectMixin):
 
         if(self.options.spoolpath):
             if not os.path.isdir(self.options.spoolpath):
-                inkex.errormsg(u"Le chemin spécifié (%s) pour le répértoire de spool où seront exportés les fichier tsf est incorrect." % self.options.spoolpath)
+                inkex.errormsg(
+                    u"Le chemin spécifié (%s) pour le répértoire de spool où seront exportés les fichier tsf est incorrect." % self.options.spoolpath)
                 return
 
         working_file = self.options.input_file
 
         # update viewbox to match selection
         if(self.onlyselected()):
-            selection_bbox = self.svg.get_selected_bbox()
-            self.svg.set('viewBox', f'{selection_bbox.left} {selection_bbox.top} {selection_bbox.width} {selection_bbox.height}')
-            self.svg.set('width',f'{selection_bbox.width}{self.svg.unit}')
-            self.svg.set('height', f'{selection_bbox.height}{self.svg.unit}')
+            selection_bbox = self.get_selected_bbox()
+            inkex.errormsg('Selection bbox0 : %s' %
+                           self.svg.get_selected_bbox())
+            inkex.errormsg('Selection bbox : %s' % selection_bbox)
+            self.svg.set(
+                'viewBox', f'{selection_bbox.left} {selection_bbox.top} {selection_bbox.width} {selection_bbox.height}')
+            self.svg.set('width', f'{selection_bbox.width}{self.unit}')
+            self.svg.set('height', f'{selection_bbox.height}{self.unit}')
             document = etree.tostring(self.document)
             with open('/tmp/output.svg', 'w+') as f:
                 f.write(document.decode('utf-8'))
             del document
             working_file = '/tmp/output.svg'
-       
+
         inkex.errormsg("View box %s" % self.svg.get_viewbox())
 
-        tmp_f ='/tmp/tmp.svg'
+        tmp_f = '/tmp/tmp.svg'
         actions = '--actions=select-all;object-unlink-clones;select-all;object-to-path;export-filename:%s;export-do;' % tmp_f
         inkex.command.inkscape(actions, working_file)
         with open(tmp_f) as tmp:
@@ -216,7 +266,6 @@ class TsfEffect(EffectExtension, TsfFileEffectMixin):
             doc_width = self.svg.unittouu(root.get('width'))
             doc_height = self.svg.unittouu(root.get('height'))
             output_file = None
-            
 
             # start generating tsf
             print_("start generating tsf")
@@ -224,15 +273,14 @@ class TsfEffect(EffectExtension, TsfFileEffectMixin):
             output_file = open(filepath, "w")
             viewbox = self.svg.get_viewbox()
             self.initialize_tsf(
-                options = self.options, 
-                w = doc_width, 
-                h = doc_height, 
-                jobname=jobanme, 
+                options=self.options,
+                w=doc_width,
+                h=doc_height,
+                jobname=jobanme,
                 output=output_file,
-                offset_x = viewbox [0],
-                offset_y = viewbox [1]
+                offset_x=viewbox[0],
+                offset_y=viewbox[1]
             )
- 
 
             self.write_tsf_header()
 
@@ -244,7 +292,7 @@ class TsfEffect(EffectExtension, TsfFileEffectMixin):
                 selection_bbox = root.get_selected_bbox()
                 inkex.errormsg("selection bbox %s" % selection_bbox)
                 iterdescendants = [
-                    iter_path_nodes(node) 
+                    iter_path_nodes(node)
                     for node in root.selected.values()
                 ]
                 path_itertor = chain(*iterdescendants)
@@ -253,26 +301,26 @@ class TsfEffect(EffectExtension, TsfFileEffectMixin):
 
             inkex.errormsg('==doc size : %sx%s' % (doc_width, doc_height))
             for path_element in path_itertor:
-                path_style = dict(inkex.Style.parse_str(path_element.get('style', '')))
+                path_style = dict(inkex.Style.parse_str(
+                    path_element.get('style', '')))
                 path_color = path_style.get('stroke', None)
-                inkex.errormsg('== path_element : %s #%s' % (path_element, path_element.get('id')))
+                inkex.errormsg('== path_element : %s #%s' %
+                               (path_element, path_element.get('id')))
                 inkex.errormsg('  -> style : %s' % (path_style))
                 if path_color in TROTEC_COLORS:
-                    #make path not visible
+                    # make path not visible
                     path_style['stroke-opacity'] = '0'
                     path_style['stroke-width'] = '0'
                     path_element.set('style', str(inkex.Style(path_style)))
                     try:
-                        composed_transform = path_element.composed_transform()
-                        bbox = path_element.bounding_box(path_element.composed_transform())
-                        inkex.errormsg(' -> path_element bbox : %s' % bbox)
-                        inkex.errormsg(
-                            ' -> path_element composed_transform : %s' % 
-                            composed_transform
+                        bbox = self.fully_transformed_bounding_box(
+                            path_element
                         )
+                        inkex.errormsg(' -> path_element bbox : %s' % bbox)
                         if self.onlyselected() or self.is_in_viewbox(bbox):
                             inkex.errormsg("    -> Path is ok to use")
-                            inkex.errormsg(' -> path_element type : %s' % type(path_element))
+                            inkex.errormsg(
+                                ' -> path_element type : %s' % type(path_element))
 
                             paths_by_color.setdefault(
                                 path_color, []
@@ -280,7 +328,7 @@ class TsfEffect(EffectExtension, TsfFileEffectMixin):
                                 path_element
                             )
                     except TypeError as e:
-                        inkex.errormsg("TypeError oops : %s"% e)
+                        inkex.errormsg("TypeError oops : %s" % e)
                         pass
 
             inkex.errormsg("== paths_by_color : %s" % paths_by_color)
@@ -291,10 +339,12 @@ class TsfEffect(EffectExtension, TsfFileEffectMixin):
                     print_("generate png then bmp for engraving")
                     if(self.options.processmode != 'None'):
                         self.generate_bmp(tmp_bmp)
-                        if(identify_command('-format', '%k', tmp_bmp).strip() != "1"):  # If more than one color in png output
+                        # If more than one color in png output
+                        if(identify_command('-format', '%k', tmp_bmp).strip() != "1"):
                             self.write_tsf_picture(tmp_bmp)
                 except ImageMagickError:
-                    inkex.errormsg(u"⚠️ Impossible de générer le fichier de gravure. \n\nImageMagick est il correctement installé ?\n")
+                    inkex.errormsg(
+                        u"⚠️ Impossible de générer le fichier de gravure. \n\nImageMagick est il correctement installé ?\n")
 
                 # adding polygones
                 print_("generate png then bmp for engraving")
@@ -325,7 +375,7 @@ class TsfEffect(EffectExtension, TsfFileEffectMixin):
                     print_("filepath : %s" % filepath)
                     try:
                         TsfFilePreviewer(
-                            filepath, 
+                            filepath,
                             export_time=round(
                                 end_time - start_time, 1
                             )
@@ -338,6 +388,7 @@ class TsfEffect(EffectExtension, TsfFileEffectMixin):
                     pass
             else:
                 inkex.errormsg(u"Votre fichier est prêt à être decoupé.")
+
 
 if __name__ == '__main__':
     TsfEffect().run(output=False)
