@@ -1,13 +1,24 @@
 fablab-inkscape-plugins
 =======================
 
-⚠️ Cette version n'est pas compatible avec inkscape 1.0 et versions suivantes. Une migration des plugins est en cours sur la branche [inkscape-1.0.x-migration](https://github.com/bumblebeefr/fablab-inkscape-plugins/tree/inkscape-1.0.x-migration).
+⚠️ Migration à inkscape 1.x en cours.
 
---
+ - [x] Imprimante/découpeuse vinyle Roland type BN20
+ - [x] Générateur de boites
+ - [x] Generateur de lignes d'encoches (tenons)  
+ - [ ] Plugin pour decoupe laser trotec *Migration en cours*
+   - [x] Syntaxe des nouveau plugins
+   - [ ] Découpe *Migration en cours*
+   - [ ] Gravure
+ - [ ] Tour numérique Proxxon (surcouche au plugin cnc integré)
+ - [ ] Mise au propre et refacto.
+
+
+---
 
 Collection de plugins inkscape utiles ans un fablab
 
-Ces plugins sont fonctionels avec les versions `0.48.x` et `0.91` d'inkscape.
+~Ces plugins sont fonctionels avec les versions `0.48.x` et `0.91` d'inkscape.~
 
 ## Utiles pour la découpeuse laser
 
