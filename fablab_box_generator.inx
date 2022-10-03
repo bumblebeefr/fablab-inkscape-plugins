@@ -5,8 +5,6 @@
   <id>cc.bumblebee.fablab.boxgenerator</id>
   <dependency type="executable" 
               location="extensions">fablab_box_generator.py</dependency>
-  <dependency type="executable" 
-              location="extensions">inkex.py</dependency>
   
   <param name="path_id" type="string" gui-text="ID svg de la boite (prefixe))">box</param>
 

@@ -4,7 +4,6 @@
 	<id>cc.bumblebee.fablab.path2polygon</id>
 	<dependency type="extension">org.inkscape.output.svg.inkscape</dependency>
 	<dependency type="executable" location="extensions">fablab_path_to_polygon.py</dependency>
-	<dependency type="executable" location="extensions">inkex.py</dependency>
 	
  	<param name="precision" type="float" _gui-text="Precision : ">0.2</param>		
 
